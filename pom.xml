@@ -36,6 +36,7 @@
         <servlet-api.version>6.0.0</servlet-api.version>
         <mysql.version>8.0.33</mysql.version>
         <spring-boot-security>2.5.15</spring-boot-security>
+        <druid.version>1.2.27</druid.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -80,6 +81,13 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- 必须使用这个 starter，而不是单独的 druid 包 -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid.version}</version> <!-- 版本号建议 1.2.x -->
             </dependency>
             
             <!-- JWT (兼容Jakarta EE 10) -->

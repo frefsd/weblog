@@ -35,6 +35,12 @@
             <scope>runtime</scope>
             <version>${mysql.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>${druid.version}</version> <!-- 版本号建议 1.2.x -->
+        </dependency>
         <!-- springdoc-openapi-->
         <dependency>
             <groupId>org.springdoc</groupId>
