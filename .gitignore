@@ -33,7 +33,7 @@ build/
 .vscode/
 
 WeBlog-server/src/main/resources/application.yaml
-
+WeBlog-server/src/main/resources/application-druid.yaml
 # logs (runtime output)
 logs/
 *.log
