@@ -104,8 +104,6 @@ getDashboardArticleStatisticsInfo().then((e) => {
         pvTotalCount.value = e.data.pvTotalCount || 0
     }
 })
-
-
 </script>
 
 <style scope>

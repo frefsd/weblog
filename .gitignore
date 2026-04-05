@@ -34,6 +34,7 @@ build/
 
 WeBlog-server/src/main/resources/application.yaml
 WeBlog-server/src/main/resources/application-druid.yaml
+WeBlog-server/src/test/java/com.blog/WeBlogServerApplicationTests.java
 # logs (runtime output)
 logs/
 *.log

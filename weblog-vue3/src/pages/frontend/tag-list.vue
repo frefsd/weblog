@@ -5,7 +5,6 @@
         <div class="grid grid-cols-4">
             <!-- 左边栏 -->
             <div class="col-span-4 px-3 md:col-span-3 sm:col-span-4">
-
                 <div
                     class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
                     <h2 class="mb-2 font-bold text-gray-900 uppercase dark:text-white">标签</h2>
@@ -21,7 +20,6 @@
             </div>
         </div>
     </div>
-
     <Footer></Footer>
 </template>
 

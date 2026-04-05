@@ -83,11 +83,10 @@
                 <version>${lombok.version}</version>
             </dependency>
 
-            <!-- 必须使用这个 starter，而不是单独的 druid 包 -->
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>druid-spring-boot-starter</artifactId>
-                <version>${druid.version}</version> <!-- 版本号建议 1.2.x -->
+                <version>${druid.version}</version>
             </dependency>
             
             <!-- JWT (兼容Jakarta EE 10) -->
