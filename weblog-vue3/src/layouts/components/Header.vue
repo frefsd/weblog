@@ -6,7 +6,6 @@
 
                 <!-- LOGO 区域 -->
                 <a href="/" class="flex items-center">
-                    <!-- 如果您之前搞定了黑猫图标，可以在这里加回来，例如：<img :src="catLogo" class="h-8 mr-3" /> -->
                     <span
                         class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white transition-colors">
                         {{ $store.state.setting.blogName }}
@@ -16,7 +15,7 @@
                 <!-- 右侧操作区：暗黑模式 + 搜索 + 用户 -->
                 <div class="flex items-center md:order-2">
 
-                    <!-- 🔥 暗黑模式切换按钮 (已移至此处，始终可见) -->
+                    <!-- 暗黑模式切换按钮 (已移至此处，始终可见) -->
                     <button @click="toggleDarkMode" type="button"
                         class="p-2 mr-1 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors"
                         :aria-label="isDark ? '切换到明亮模式' : '切换到暗黑模式'">
@@ -123,7 +122,7 @@
                                                                 class="flex items-center text-sm text-gray-400 dark:text-gray-500">
                                                                 <span>{{ article.createTime }}</span><span
                                                                     class="mx-2">•</span><span>阅读 {{ article.readNum ||
-                                                                    0 }}</span>
+                                                                        0 }}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -168,7 +167,7 @@
                                                             v-for="tag in ['Spring Boot', 'Vue.js', 'Java', 'MySQL', 'Docker']"
                                                             :key="tag" @click="searchKeyword = tag"
                                                             class="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors">{{
-                                                            tag }}</span>
+                                                                tag }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -318,7 +317,7 @@
                                     <div class="font-semibold text-gray-900 dark:text-white">{{ article.title }}</div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ article.createTime }}
                                         • {{
-                                        article.readNum }} 阅读</div>
+                                            article.readNum }} 阅读</div>
                                 </div>
                             </div>
                             <div v-else-if="searchKeyword.trim()"

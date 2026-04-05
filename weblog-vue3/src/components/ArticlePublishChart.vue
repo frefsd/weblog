@@ -8,10 +8,8 @@
             </template>
             <!-- card body -->
             <div id="publishArticleChart" style="width: 100%; height: 300px;">
-
             </div>
         </el-card>
-
     </div>
 </template>
 

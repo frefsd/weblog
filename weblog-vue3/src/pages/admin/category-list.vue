@@ -207,8 +207,6 @@ const deleteCategorySubmit = (row) => {
 
         })
 }
-
-
 </script>
 
 <style></style>

@@ -1,6 +1,7 @@
 <template>
     <footer class="footer">
-        Copyright © 2026. All rights reserved. Provided by&nbsp;<a class="fanchen" href="https://github.com/frefsd" target="_blank">凡尘</a>
+        Copyright © 2026. All rights reserved. Provided by&nbsp;<a class="fanchen" href="https://github.com/frefsd"
+            target="_blank">凡尘</a>
     </footer>
 </template>
 

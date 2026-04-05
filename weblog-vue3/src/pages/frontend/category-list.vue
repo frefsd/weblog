@@ -8,7 +8,6 @@
                 <div
                     class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
                     <h2 class="mb-2 font-bold text-gray-900 uppercase dark:text-white">分类</h2>
-
                     <div
                         class="text-base font-medium text-gray-900 bg-white rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <a @click="goCatagoryArticleListPage(item.id, item.name)" v-for="(item, index) in categories"
@@ -31,7 +30,6 @@
             </div>
         </div>
     </div>
-
     <Footer></Footer>
 </template>
 
@@ -55,6 +53,4 @@ getCategories().then((e) => {
         categories.value = e.data
     }
 })
-
-
 </script>

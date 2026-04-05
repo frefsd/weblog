@@ -7,11 +7,8 @@
                 </div>
             </template>
             <!-- card body -->
-            <div id="categoryChart" style="width: 100%; height: 300px;">
-
-            </div>
+            <div id="categoryChart" style="width: 100%; height: 300px;"> </div>
         </el-card>
-
     </div>
 </template>
 

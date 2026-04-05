@@ -30,9 +30,8 @@ export default {
         }
     }
 }
-
-
 </script>
+
 <style>
 #editor {
     margin: auto;

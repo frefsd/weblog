@@ -9,11 +9,6 @@ import { showPageLoading, hidePageLoading } from '@/composables/util'
 router.beforeEach(async (to, from, next) => {
     console.log('全局前置守卫 >>>>')
     showPageLoading()
-    // if (to.name !== 'Login' && !isAuthenticated) next({ name: 'Login' })
-    // else next()
-
-    
-
     const token = getToken()
 
     // 如果用户已登录，则自动获取用户信息，并使用全局状态管理
