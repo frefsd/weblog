@@ -24,6 +24,10 @@ public class AdminAuthController {
     private final IAuthService authService;
 
 
+    /**
+     * 用于开发测试
+     * @return
+     */
     @GetMapping("/login")
     public Map<String, String> loginPage() {
         Map<String, String> map = new HashMap<>();
@@ -31,6 +35,7 @@ public class AdminAuthController {
         map.put("status", "success");
         return map;
     }
+
     /**
      * 登录认证
      *

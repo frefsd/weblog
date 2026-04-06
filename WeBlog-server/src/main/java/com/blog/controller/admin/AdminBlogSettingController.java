@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("adminBlogSettingController")
+@RestController
 @Slf4j
 @RequiredArgsConstructor
 @Tag(name = "博客管理", description = "查看和修改博客详情")

@@ -1,6 +1,6 @@
 import router from '@/router/index'
 import { getToken } from '@/composables/auth'
-import { notification, showMessage } from '@/composables/util'
+import { showMessage } from '@/composables/util'
 import store from '@/store'
 import { showPageLoading, hidePageLoading } from '@/composables/util'
 
@@ -11,10 +11,18 @@ router.beforeEach(async (to, from, next) => {
     showPageLoading()
     const token = getToken()
 
-    // 如果用户已登录，则自动获取用户信息，并使用全局状态管理
     if (token) {
-        console.log('获取登录用户信息。。。。')
-        await store.dispatch('getAdminInfo')
+        try {
+            // 注意：如果 token 过期，这个 dispatch 可能会报错或被后端拒绝
+            // 如果你的 getAdminInfo 接口在 token 过期时会返回 401，
+            // 那么 axios 拦截器会捕获到，并触发上面的 logout。
+            await store.dispatch('getAdminInfo')
+        } catch (e) {
+            // 如果获取信息失败（比如 token 无效），强制登出
+            await store.dispatch('logout')
+            next({ path: '/login', query: { redirect: to.fullPath } })
+            return
+        }
     }
 
     // 加载博客设置（前后台都需要）
@@ -25,16 +33,15 @@ router.beforeEach(async (to, from, next) => {
     //未登录，强制跳转登录页
     if (!token && to.path.startsWith('/admin')) {
         showMessage('请先登录', 'warning')
-        next({ path: '/login'})
+        next({ path: '/login', query: { redirect: to.fullPath } })
         return
     }
 
-    // 防止重复登录
-    // if (token && to.path == '/login') {
-    //     notification('请勿重复登录', 'error')
-    //     next({ path: from.path ? from.path : '/' })
-    // }
-
+    // 3. 已登录访问登录页 -> 踢回首页或上一页
+    if (token && to.path == '/login') {
+        next({ path: from.query.redirect || '/' })
+        return
+    }
     next()
 })
 

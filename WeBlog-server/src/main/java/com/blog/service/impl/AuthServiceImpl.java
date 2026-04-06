@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,12 +29,13 @@ public class AuthServiceImpl implements IAuthService {
     public LoginVO login(LoginDTO request) {
         try {
             // 1. 执行 Spring Security 认证
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
                             request.getPassword()
                     )
             );
+
             // 2. 认证成功，生成 Token
             String token = jwtUtil.generateToken(request.getUsername());
 
