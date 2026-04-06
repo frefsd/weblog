@@ -23,6 +23,7 @@ public class ArchiveController {
     @Operation(summary = "获取归档列表")
     @PostMapping("/list")
     public Result<List<ArchiveItemVO>> getArchive() {
-        return Result.ok(articleService.getArchiveList());
+        List<ArchiveItemVO> archiveList = articleService.getArchiveList();
+        return Result.ok(archiveList);
     }
 }
