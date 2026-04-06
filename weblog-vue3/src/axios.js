@@ -1,8 +1,7 @@
 import axios from "axios";
-import { notification, showMessage } from '@/composables/util'
+import { showMessage } from '@/composables/util'
 import { getToken } from '@/composables/auth'
 import store from "@/store";
-import { Console } from "windicss/utils";
 
 const instance = axios.create({
     baseURL: import.meta.env.VITE_APP_BASE_API,
@@ -31,27 +30,25 @@ instance.interceptors.response.use(function (response) {
     // 对响应数据做点什么
     return response.data;
 }, function (error) {
-    // 对响应错误做点什么
-    let status = error.response.status
-    console.log('错误响应==========》' + status)
-    if (status == 401 || status == 402) {
-        console.log('401-------------')
-        store.dispatch('logout').finally(() => location.reload())
+    // 防止报错：如果网络断了，error.response 可能是 undefined
+    if (!error.response) {
+        showMessage('网络错误，请检查服务器', 'error')
+        return Promise.reject(error);
     }
-
+    let status = error.response.status
+    if (status == 401 || status == 403) {
+        showMessage('登录已过期，请重新登录', 'error')
+        store.dispatch('logout')
+    }
     let isSuccess = error.response.data.success
-    console.log('错误响应==========》' + isSuccess)
     if (!isSuccess) {
-        console.log('error: ' + error.response.data.message)
         let message = error.response.data.message || '请求失败'
-
-        // todo 失效的情况
-        // notification(message, 'error')
         showMessage(message, 'error')
     }
 
     return Promise.reject(error);
 });
+
 
 // 暴露
 export default instance
