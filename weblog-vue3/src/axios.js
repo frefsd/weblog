@@ -36,9 +36,12 @@ instance.interceptors.response.use(function (response) {
         return Promise.reject(error);
     }
     let status = error.response.status
-    if (status == 401 || status == 403) {
+    // 401 Unauthorized，说明登录过期了
+    if (status == 401) {
         showMessage('登录已过期，请重新登录', 'error')
         store.dispatch('logout')
+    } else if (status == 403) {
+        showMessage('没有权限访问', 'error')
     }
     let isSuccess = error.response.data.success
     if (!isSuccess) {
