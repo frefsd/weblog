@@ -58,8 +58,6 @@ public class SecurityConfig {
                         // 明确放行 GET 和 POST 的 /login 请求,做兜底
                         .requestMatchers(HttpMethod.GET, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                        //所有以 /admin/ 开头的 URL，必须拥有 ROLE_ADMIN 权限才能访问。
-                        //.requestMatchers("/admin/**").hasRole("ADMIN")
                         // 除了上面放行的，其他所有的请求都需要认证
                         .anyRequest().authenticated()
 
