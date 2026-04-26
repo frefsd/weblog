@@ -12,7 +12,7 @@ const instance = axios.create({
 instance.interceptors.request.use(function (config) {
     // 在发送请求之前做些什么
     const token = getToken()
-    console.log('统一添加 token: ' + token)
+    //console.log('统一添加 token: ' + token)
 
     // 统一添加请求头 Token
     if (token) {
@@ -41,7 +41,6 @@ instance.interceptors.response.use(function (response) {
         showMessage('登录已过期，请重新登录', 'error')
         store.dispatch('logout')
     } else if (status == 403) {
-        showMessage('没有权限访问', 'error')
     }
     let isSuccess = error.response.data.success
     if (!isSuccess) {

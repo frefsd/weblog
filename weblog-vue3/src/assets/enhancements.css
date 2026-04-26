@@ -90,7 +90,7 @@ body {
   padding: 24px;
 }
 
-/* 11. 响应式字体增强 */
+/* 11. 响应式字体增强 (已注释，防止部署后整体布局放大)
 @media (min-width: 768px) {
   html {
     font-size: 17px;
@@ -102,6 +102,7 @@ body {
     font-size: 18px;
   }
 }
+*/
 
 /* 12. 文章内容增强 */
 .article-content-enhanced {
