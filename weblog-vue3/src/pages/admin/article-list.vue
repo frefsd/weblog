@@ -26,18 +26,23 @@
                 写文章</el-button>
         </div>
 
+        <div class="table-wrapper">
         <el-table :data="tableData" stripe style="width: 100%" class="mt-4" v-loading="tableLoading">
-            <el-table-column prop="title" label="标题" width="380" />
-            <el-table-column label="预览图" width="180">
+            <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
+                <template #default="scope">
+                    <span class="title-cell">{{ scope.row.title }}</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="预览图" width="120">
                 <template #default="scope">
                     <el-image style="width: 50px;" :src="scope.row.titleImage" />
                 </template>
             </el-table-column>
-            <el-table-column label="创建时间" width="180">
+            <el-table-column label="创建时间" width="170">
                 <template #default="{ row }">
                     {{ row.createTime ? moment(row.createTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
                 </template>
-            </el-table-column> <el-table-column label="操作">
+            </el-table-column> <el-table-column label="操作" width="250">
                 <template #default="scope">
                     <el-button size="small" @click="showArticleUpdateEditorShow(scope.row)">
                         <el-icon class="mr-1">
@@ -58,6 +63,7 @@
                 </template>
             </el-table-column>
         </el-table>
+        </div>
 
         <div class="mt-5 flex item-center justify-center">
             <el-pagination v-model:current-page="current" v-model:page-size="size" :page-sizes="[10, 20, 50]"
@@ -482,6 +488,17 @@ const remoteMethod = (query) => {
 
 .message {
     z-index: 9999 !important;
+}
+
+.title-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+.table-wrapper {
+    overflow-x: auto;
 }
 </style>
 
