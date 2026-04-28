@@ -471,7 +471,7 @@ server: {
 ```yaml
 spring:
   profiles:
-    active: prod
+    active: druid
 ```
 
 2. 使用Docker部署（Dockerfile示例）：
