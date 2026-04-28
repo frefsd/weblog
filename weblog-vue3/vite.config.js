@@ -8,9 +8,8 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  base: '/',
+  //base: '/',
   server: {
     historyApiFallback: true,
     port: 6066,
@@ -36,7 +35,6 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       // 指定 src 文件夹别名，以便快速定位到此文件夹
-      // "~": path.resolve(__dirname, "src")
     }
   }
 })
