@@ -4,7 +4,7 @@
 
 WeBlog是一个基于Spring Boot和Vue 3构建的现代化前后端分离博客系统。系统提供了完整的博客管理功能，包括文章管理、分类标签、用户管理、数据统计等，适合个人博客、技术分享平台等场景使用。
 
-该项目的**前端界面设计与交互**参考了开源项目 [WeBlog](https://gitee.com/AllenJiang/WeBlog)（在此向原作者表示感谢），但**后端核心架构、数据库设计及业务逻辑完全由本人独立开发**。
+该项目的前端界面设计与交互参考了开源项目 [WeBlog](https://gitee.com/AllenJiang/WeBlog)（在此向原作者表示感谢），但后端核心架构、数据库设计及业务逻辑完全由本人独立开发。
 
 本项目旨在记录我的技术成长，同时也是我对 **Spring Boot 3** 与 **Vue 3** 生态的一次深度实践。
 
@@ -558,6 +558,7 @@ server {
 - Vue.js
 - Element Plus
 - MyBatis-Plus
+- [WeBlog: 📗 Spring Boot + Vue 3.2 + Vite 4.3 前后端分离个人博客（可作为 Java 毕业设计项目）~ 感谢点个 Star 呀~](https://gitee.com/AllenJiang/WeBlog)
 - 以及其他所有依赖的开源项目
 
 ---
