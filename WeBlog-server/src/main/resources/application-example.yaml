@@ -1,0 +1,61 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: WeBlog
+  servlet:
+    multipart:
+      max-file-size: 10MB       # 单个文件最大大小
+      max-request-size: 20MB    # 一次请求总大小
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/YOURSELFDATABASE?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: YOURSELFMYSQLUSERNAME
+    password: YOURSELFMYSQLPASSWORD
+    hikari: # HikariCP 连接池优化配置
+      connection-timeout: 30000  # 获取连接超时时间 (30秒)，超时抛异常
+      maximum-pool-size: 10      # 最大连接数 (同时最多10个请求能拿到数据库连接)
+      minimum-idle: 5            # 最小空闲连接数 (即使没人用，也保持5个连接 ready，提高响应速度)
+
+  profiles:
+    include: local   # 本地开发环境设为 local 生产环境设为 druid
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #开启 SQL 日志
+    map-underscore-to-camel-case: true  #开启驼峰映射（create_time -> createTime）
+  global-config:
+    db-config:
+      id-type: auto                     # 主键策略：自增 (对应数据库 AUTO_INCREMENT)
+      logic-delete-field: is_deleted    # 数据库中代表删除的字段名
+      logic-delete-value: 1             # 1 代表 "已删除"
+      logic-not-delete-value: 0         # 0 代表 "未删除"
+  mapper-locations: classpath:mapper/*.xml
+
+logging:
+  level:
+    com.blog: debug
+  file:
+    name: logs/weblog.log
+
+# JWT配置
+jwt:
+  secret:  # 密钥 自己添加重新生成
+  expiration: 86400000  # 24小时
+
+
+#阿里云OSS
+aliyun:
+  oss:
+    endpoint: YOURSELFENDPOINT
+    bucketName: YOURSELFBUCKETNAME
+    region: YOURSELFREGION
+    access-key-id: YOURSESLACCESS-KEY-ID          # 替换为你的AccessKey ID
+    access-key-secret: YOURSELFACCESS-KEY-SECRET # 替换为你的AccessKey Secret
+    allow-types: jpg,jpeg,png                         # 允许上传的后缀
+
+# swagger文档
+springdoc:
+  swagger-ui:
+    enabled: true
