@@ -467,7 +467,7 @@ server: {
 ### 后端部署
 
 1. 生产环境配置：
-创建 `application-prod.yaml` 文件并设置：
+创建 `application-druid.yaml` 文件并设置：
 ```yaml
 spring:
   profiles:
