@@ -558,7 +558,7 @@ server {
 - Vue.js
 - Element Plus
 - MyBatis-Plus
-- [WeBlog: 📗 Spring Boot + Vue 3.2 + Vite 4.3 前后端分离个人博客（可作为 Java 毕业设计项目）~ 感谢点个 Star 呀~](https://gitee.com/AllenJiang/WeBlog)
+- [WeBlog](https://gitee.com/AllenJiang/WeBlog)
 - 以及其他所有依赖的开源项目
 
 ---
