@@ -9,9 +9,14 @@ import com.blog.entity.*;
 import com.blog.exception.BusinessException;
 import com.blog.mapper.*;
 import com.blog.service.IArticleService;
+import com.blog.utils.RedisConstants;
 import com.blog.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +47,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final ArticleTagRelMapper articleTagRelMapper;
     private final TagMapper tagMapper;
     private final CategoryMapper categoryMapper;
+
+    // 自注入，用于 Spring Cache AOP 代理调用
+    @Autowired
+    @Lazy
+    private ArticleServiceImpl self;
 
     private static final DateTimeFormatter FRONTEND_DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -187,6 +197,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {RedisConstants.ARTICLE_DETAIL_CACHE, RedisConstants.ARTICLE_INDEX_CACHE}, allEntries = true)
     public void publishArticle(ArticlePublishDTO dto) {
         ensureCategoryExists(dto.getCategoryId());
         List<Long> tagIds = resolveTagIds(dto.getTags());
@@ -229,6 +240,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {RedisConstants.ARTICLE_DETAIL_CACHE, RedisConstants.ARTICLE_INDEX_CACHE}, allEntries = true)
     public void updateArticle(ArticleUpdateDTO dto) {
         ensureCategoryExists(dto.getCategoryId());
         List<Long> tagIds = resolveTagIds(dto.getTags());
@@ -293,6 +305,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {RedisConstants.ARTICLE_DETAIL_CACHE, RedisConstants.ARTICLE_INDEX_CACHE}, allEntries = true)
     public void deleteArticle(ArticleDeleteDTO dto) {
         Long articleId = dto.getArticleId();
         Article exist = articleMapper.selectById(articleId);
@@ -307,9 +320,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     /**
-     * 获取前台首页文章分页列表
+     * 获取前台首页文章分页列表（缓存 5 分钟，避免 N+1 查询）
      */
     @Override
+    @Cacheable(value = RedisConstants.ARTICLE_INDEX_CACHE, key = "#query.current + '_' + #query.size", unless = "#result == null or #result.records.isEmpty()")
     public IPage<ArticleIndexVO> getArticleIndexPage(ArticlePageDTO query) {
         long current = query.getCurrent();
         long size = query.getSize();
@@ -337,19 +351,38 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     /**
-     * 获取前台文章详情
+     * 获取前台文章详情（readNum 始终自增，不走缓存）
      */
     @Override
     public ArticleFrontendDetailVO getArticleDetailForFrontend(Long articleId) {
-        // 查询文章基本信息
+        // 1. 查询文章基本信息（用于 readNum 自增）
         Article article = articleMapper.selectById(articleId);
         if (article == null || (article.getIsDeleted() != null && article.getIsDeleted() == 1)) {
             throw new BusinessException("文章不存在");
         }
 
-        // 增加阅读量
+        // 2. 自增阅读数（始终写入数据库，保证实时准确）
         article.setReadNum(article.getReadNum() + 1);
         articleMapper.updateById(article);
+
+        // 3. 通过 self 调用 @Cacheable 方法获取缓存详情
+        ArticleFrontendDetailVO detail = self.getCachedArticleDetail(articleId);
+
+        // 4. 用当前 readNum 覆盖缓存中的旧值
+        detail.setReadNum(article.getReadNum());
+        return detail;
+    }
+
+    /**
+     * 获取缓存的文章详情（仅缓存静态数据，readNum 由外层方法处理）
+     * <p>
+     * 缓存 30 分钟，内容/分类/标签/上下篇等数据很少变化。
+     */
+    @Cacheable(value = RedisConstants.ARTICLE_DETAIL_CACHE, key = "#articleId", unless = "#result == null")
+    @Override
+    public ArticleFrontendDetailVO getCachedArticleDetail(Long articleId) {
+        // 查询文章基本信息
+        Article article = articleMapper.selectById(articleId);
 
         // 查询文章内容
         ArticleContent content = articleContentMapper.selectOne(

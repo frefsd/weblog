@@ -9,9 +9,9 @@
     </parent>
 
     <groupId>com.blog</groupId>
-    <artifactId>WeBlog-common</artifactId>
+    <artifactId>weblog-common</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>WeBlog-common</name>
+    <name>weblog-common</name>
     <description>WeBlog-common</description>
 
     <properties>

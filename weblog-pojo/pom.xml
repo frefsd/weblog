@@ -8,9 +8,9 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <groupId>com.blog</groupId>
-    <artifactId>WeBlog-pojo</artifactId>
+    <artifactId>weblog-pojo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>WeBlog-pojo</name>
+    <name>weblog-pojo</name>
     <description>WeBlog-pojo</description>
 
     <properties>

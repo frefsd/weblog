@@ -8,9 +8,9 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <groupId>com.blog</groupId>
-    <artifactId>WeBlog-server</artifactId>
+    <artifactId>weblog-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>WeBlog-server</name>
+    <name>weblog-server</name>
     <description>WeBlog-server</description>
 
     <properties>
@@ -55,12 +55,12 @@
         </dependency>
         <dependency>
             <groupId>com.blog</groupId>
-            <artifactId>WeBlog-pojo</artifactId>
+            <artifactId>weblog-pojo</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.blog</groupId>
-            <artifactId>WeBlog-common</artifactId>
+            <artifactId>weblog-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- Spring Data Redis -->
