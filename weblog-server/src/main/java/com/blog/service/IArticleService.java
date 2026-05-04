@@ -57,6 +57,11 @@ public interface IArticleService extends IService<Article> {
     ArticleFrontendDetailVO getArticleDetailForFrontend(Long articleId);
 
     /**
+     * 获取缓存的文章详情（仅内部调用，数据不包含最新阅读数）
+     */
+    ArticleFrontendDetailVO getCachedArticleDetail(Long articleId);
+
+    /**
      * 根据分类 ID 获取文章列表
      */
     IPage<ArticleIndexVO> getArticlesByCategoryId(Long categoryId, ArticlePageDTO query);
