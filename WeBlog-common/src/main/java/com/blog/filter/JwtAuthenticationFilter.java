@@ -1,12 +1,14 @@
 package com.blog.filter;
 
 import com.blog.utils.JwtUtil;
+import com.blog.utils.RedisConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +26,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -50,6 +53,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             try {
+                // 2.1 检查 Redis 白名单：Token 必须存在于 Redis 中才有效
+                String cachedUsername = redisTemplate.opsForValue().get(RedisConstants.LOGIN_TOKEN_KEY + jwt);
+                if (cachedUsername == null) {
+                    log.warn("Token 不在 Redis 白名单中（已退出登录或已失效），用户：{}", username);
+                    chain.doFilter(request, response);
+                    return;
+                }
+
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
                 // 再次验证 Token (检查过期时间等)

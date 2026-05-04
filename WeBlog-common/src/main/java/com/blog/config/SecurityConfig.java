@@ -32,7 +32,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 // 2. 关闭 CSRF
                 .csrf(csrf -> csrf.disable())
-                // 3. 无状态会话
+                // 3. 禁用默认 LogoutFilter，由自定义 /logout 控制器处理退出
+                .logout(logout -> logout.disable())
+                // 4. 无状态会话
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 1. 放行 Swagger 所有静态资源和核心接口

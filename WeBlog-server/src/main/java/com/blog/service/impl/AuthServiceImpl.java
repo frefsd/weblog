@@ -4,13 +4,17 @@ import com.blog.dto.LoginDTO;
 import com.blog.exception.BusinessException;
 import com.blog.service.IAuthService;
 import com.blog.utils.JwtUtil;
+import com.blog.utils.RedisConstants;
 import com.blog.vo.LoginVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements IAuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, String> redisTemplate;
 
     /**
      * 登录认证
@@ -38,6 +43,10 @@ public class AuthServiceImpl implements IAuthService {
 
             // 2. 认证成功，生成 Token
             String token = jwtUtil.generateToken(request.getUsername());
+
+            // 3. 将 Token 存入 Redis 白名单（TTL 24 小时，与 JWT 过期时间一致）
+            redisTemplate.opsForValue().set(RedisConstants.LOGIN_TOKEN_KEY + token, request.getUsername(), RedisConstants.LOGIN_TOKEN_TTL, TimeUnit.SECONDS);
+            log.info("用户 [{}] 登录成功，Token 已存入 Redis", request.getUsername());
 
             return new LoginVO(token);
 
