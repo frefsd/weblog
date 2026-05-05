@@ -7,6 +7,7 @@ import com.blog.service.IArticleService;
 import com.blog.vo.ArticleFrontendDetailVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,8 +25,8 @@ public class ArticleController {
 
     @Operation(summary = "获取文章详情")
     @PostMapping("/detail")
-    public Result<ArticleFrontendDetailVO> getArticleDetail(@Valid @RequestBody ArticleDetailDTO dto) {
-        return Result.ok(articleService.getArticleDetailForFrontend(dto.getArticleId()));
+    public Result<ArticleFrontendDetailVO> getArticleDetail(@Valid @RequestBody ArticleDetailDTO dto, HttpServletRequest request) {
+        return Result.ok(articleService.getArticleDetailForFrontend(dto.getArticleId(), request));
     }
 
     @Operation(summary = "搜索文章")

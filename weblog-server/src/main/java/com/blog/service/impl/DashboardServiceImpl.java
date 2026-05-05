@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.blog.entity.*;
 import com.blog.mapper.*;
 import com.blog.service.IDashboardService;
+import com.blog.service.IStatisticsArticlePvService;
 import com.blog.vo.CategoryArticleCountVO;
 import com.blog.vo.DashboardArticleStatisticsVO;
 import com.blog.vo.TagArticleCountVO;
@@ -34,6 +35,7 @@ public class DashboardServiceImpl implements IDashboardService {
     private final TagMapper tagMapper;
     private final ArticleCategoryRelMapper articleCategoryRelMapper;
     private final ArticleTagRelMapper articleTagRelMapper;
+    private final IStatisticsArticlePvService statisticsArticlePvService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -128,32 +130,26 @@ public class DashboardServiceImpl implements IDashboardService {
 
     /**
      * 获取 PV 统计信息（最近 7 天）
+     * <p>
+     * 从 statistics_article_pv 表按日期查询，比起原来按文章创建时间聚合更准确。
      */
     @Override
     public List<Map<String, Object>> getPVStatistics() {
         List<Map<String, Object>> result = new ArrayList<>();
 
-        // 获取最近 7 天的日期
         for (int i = 6; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
             String dateStr = date.format(DATE_FORMATTER);
 
-            LocalDateTime startOfDay = LocalDateTime.of(date, LocalTime.MIN);
-            LocalDateTime endOfDay = LocalDateTime.of(date, LocalTime.MAX);
+            StatisticsArticlePv pv = statisticsArticlePvService.lambdaQuery()
+                    .eq(StatisticsArticlePv::getPvDate, date)
+                    .one();
 
-            // 查询该时间段内所有文章的阅读量总和
-            List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
-                    .eq(Article::getIsDeleted, 0)
-                    .ge(Article::getCreateTime, startOfDay)
-                    .le(Article::getCreateTime, endOfDay));
-
-            Long totalPV = articles.stream()
-                    .mapToLong(Article::getReadNum)
-                    .sum();
+            Long pvCount = (pv != null) ? pv.getPvCount() : 0L;
 
             Map<String, Object> map = new HashMap<>();
             map.put("date", dateStr);
-            map.put("pv", totalPV);
+            map.put("pv", pvCount);
             result.add(map);
         }
 
