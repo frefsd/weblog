@@ -8,6 +8,7 @@ import com.blog.vo.ArchiveItemVO;
 import com.blog.vo.ArticleDetailVO;
 import com.blog.vo.ArticleFrontendDetailVO;
 import com.blog.vo.ArticleIndexVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -54,7 +55,7 @@ public interface IArticleService extends IService<Article> {
     /**
      * 获取前台文章详情
      */
-    ArticleFrontendDetailVO getArticleDetailForFrontend(Long articleId);
+    ArticleFrontendDetailVO getArticleDetailForFrontend(Long articleId, HttpServletRequest request);
 
     /**
      * 获取缓存的文章详情（仅内部调用，数据不包含最新阅读数）

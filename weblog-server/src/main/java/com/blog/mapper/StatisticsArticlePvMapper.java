@@ -2,6 +2,9 @@ package com.blog.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.blog.entity.StatisticsArticlePv;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -13,4 +16,8 @@ import com.blog.entity.StatisticsArticlePv;
  */
 public interface StatisticsArticlePvMapper extends BaseMapper<StatisticsArticlePv> {
 
+    /**
+     * 原子 upsert：指定日期 PV 不存在则插入，存在则 +1
+     */
+    int upsertByDate(@Param("pvDate") LocalDate pvDate);
 }

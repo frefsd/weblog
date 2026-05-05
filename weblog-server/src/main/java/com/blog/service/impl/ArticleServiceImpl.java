@@ -9,8 +9,11 @@ import com.blog.entity.*;
 import com.blog.exception.BusinessException;
 import com.blog.mapper.*;
 import com.blog.service.IArticleService;
+import com.blog.service.IStatisticsArticlePvService;
+import com.blog.service.IVisitorRecordService;
 import com.blog.utils.RedisConstants;
 import com.blog.vo.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -47,6 +51,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final ArticleTagRelMapper articleTagRelMapper;
     private final TagMapper tagMapper;
     private final CategoryMapper categoryMapper;
+    private final IVisitorRecordService visitorRecordService;
+    private final IStatisticsArticlePvService statisticsArticlePvService;
 
     // 自注入，用于 Spring Cache AOP 代理调用
     @Autowired
@@ -354,7 +360,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 获取前台文章详情（readNum 始终自增，不走缓存）
      */
     @Override
-    public ArticleFrontendDetailVO getArticleDetailForFrontend(Long articleId) {
+    public ArticleFrontendDetailVO getArticleDetailForFrontend(Long articleId, HttpServletRequest request) {
         // 1. 查询文章基本信息（用于 readNum 自增）
         Article article = articleMapper.selectById(articleId);
         if (article == null || (article.getIsDeleted() != null && article.getIsDeleted() == 1)) {
@@ -365,10 +371,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setReadNum(article.getReadNum() + 1);
         articleMapper.updateById(article);
 
-        // 3. 通过 self 调用 @Cacheable 方法获取缓存详情
+        // 3. 异步记录访客信息与日 PV（不阻塞响应）
+        visitorRecordService.recordVisitorAsync(request);
+        statisticsArticlePvService.upsertDailyPV(LocalDate.now());
+
+        // 4. 通过 self 调用 @Cacheable 方法获取缓存详情
         ArticleFrontendDetailVO detail = self.getCachedArticleDetail(articleId);
 
-        // 4. 用当前 readNum 覆盖缓存中的旧值
+        // 5. 用当前 readNum 覆盖缓存中的旧值
         detail.setReadNum(article.getReadNum());
         return detail;
     }
