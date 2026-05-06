@@ -8,8 +8,11 @@ import com.blog.entity.BlogSetting;
 import com.blog.exception.BusinessException;
 import com.blog.mapper.BlogSettingMapper;
 import com.blog.service.IBlogSettingService;
+import com.blog.utils.RedisConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,6 +33,7 @@ public class BlogSettingServiceImpl extends ServiceImpl<BlogSettingMapper, BlogS
      * @return
      */
     @Override
+    @Cacheable(value = RedisConstants.BLOG_SETTING_CACHE, unless = "#result == null")
     public BlogSetting getBlogSettingDetail() {
         //1.查询博客信息
         BlogSetting blogSetting = this.getOne(Wrappers.<BlogSetting>lambdaQuery().last("LIMIT 1"));
@@ -49,6 +53,7 @@ public class BlogSettingServiceImpl extends ServiceImpl<BlogSettingMapper, BlogS
      * @return
      */
     @Override
+    @CacheEvict(value = RedisConstants.BLOG_SETTING_CACHE, allEntries = true)
     public void updateBlogSetting(BlogSettingDTO blogSettingDTO) {
         //1.获取现有博客记录
         BlogSetting existingBlot = this.getOne(Wrappers.<BlogSetting>lambdaQuery().last("LIMIT 1"));

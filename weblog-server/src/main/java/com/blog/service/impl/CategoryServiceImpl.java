@@ -16,9 +16,12 @@ import com.blog.mapper.ArticleCategoryRelMapper;
 import com.blog.mapper.ArticleMapper;
 import com.blog.mapper.CategoryMapper;
 import com.blog.service.ICategoryService;
+import com.blog.utils.RedisConstants;
 import com.blog.vo.CategorySimpleVO;
 import com.blog.vo.SelectOptionVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +62,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = RedisConstants.CATEGORY_LIST_CACHE, allEntries = true)
     public void addCategory(CategoryAddDTO dto) {
         String name = dto.getName() == null ? "" : dto.getName().trim();
         if (name.isEmpty()) {
@@ -116,6 +120,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = RedisConstants.CATEGORY_LIST_CACHE, allEntries = true)
     public void deleteCategory(CategoryDeleteDTO dto) {
         Long categoryId = dto.getCategoryId();
 
@@ -190,6 +195,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      * 获取全部分类（前台使用）
      */
     @Override
+    @Cacheable(value = RedisConstants.CATEGORY_LIST_CACHE, unless = "#result == null or #result.isEmpty()")
     public List<CategorySimpleVO> getAllCategories() {
         return this.list(new LambdaQueryWrapper<Category>()
                         .eq(Category::getIsDeleted, 0)
