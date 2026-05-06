@@ -16,9 +16,12 @@ import com.blog.mapper.ArticleMapper;
 import com.blog.mapper.ArticleTagRelMapper;
 import com.blog.mapper.TagMapper;
 import com.blog.service.ITagService;
+import com.blog.utils.RedisConstants;
 import com.blog.vo.SelectOptionVO;
 import com.blog.vo.TagSimpleVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +62,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements ITagS
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = RedisConstants.TAG_LIST_CACHE, allEntries = true)
     public void addTags(TagAddDTO dto) {
         if (dto.getTags() == null || dto.getTags().isEmpty()) {
             throw new BusinessException("tags不能为空");
@@ -120,6 +124,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements ITagS
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = RedisConstants.TAG_LIST_CACHE, allEntries = true)
     public void deleteTag(TagDeleteDTO dto) {
         Long tagId = dto.getTagId();
 
@@ -196,6 +201,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements ITagS
      * 获取全部标签（前台使用）
      */
     @Override
+    @Cacheable(value = RedisConstants.TAG_LIST_CACHE, unless = "#result == null or #result.isEmpty()")
     public List<TagSimpleVO> getAllTags() {
         return this.list(new LambdaQueryWrapper<Tag>()
                         .eq(Tag::getIsDeleted, 0)
