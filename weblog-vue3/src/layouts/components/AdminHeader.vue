@@ -198,8 +198,17 @@ function logout() {
 <style>
 .header {
     height: 64px;
-    background-color: #fff;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .header {
+    background: rgba(30, 30, 50, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 

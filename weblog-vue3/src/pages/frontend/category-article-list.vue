@@ -2,10 +2,10 @@
     <Header></Header>
 
     <!-- 文章列表 -->
-    <div class="container mx-auto max-w-screen-xl mt-5">
-        <div class="grid grid-cols-4">
+    <div class="container mx-auto max-w-screen-xl mt-8 px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- 左边栏 -->
-            <div class="col-span-4 px-3 md:col-span-3 sm:col-span-4">
+            <div class="col-span-1 lg:col-span-3">
                 <!-- 分类标题 -->
                 <div class="flex items-center mb-5 text-gray-600 font-bold category-container text-2xl">
                     <svg class="w-6 h-6 mr-2 text-gray-600 inline dark:text-white" aria-hidden="true"
@@ -16,13 +16,19 @@
                     {{ categoryName }}
                 </div>
                 <!-- 文章列表 -->
+                <template v-if="loading">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SkeletonCard v-for="i in 6" :key="i" />
+                    </div>
+                </template>
+                <template v-else>
                 <div v-if="articles && articles.length > 0"
-                    class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div v-for="(article, index) in articles" :key="index"
-                        class="bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                        <a @click="goArticleDetail(article.id)" class="cursor-pointer">
-                            <img class="rounded-t-lg h-50 w-full" :src="article.titleImage" />
+                        class="group bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl shadow-md hover:-translate-y-1.5 hover:shadow-xl hover:border-white/60 transition-all duration-300 dark:bg-gray-800/75 dark:border-gray-600/30 dark:hover:border-gray-500/50">
+                        <a @click="goArticleDetail(article.id)" class="cursor-pointer overflow-hidden rounded-t-xl">
+                            <img class="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500" :src="article.titleImage" />
                         </a>
                         <div class="p-5">
                             <a @click="goArticleDetail(article.id)" class="cursor-pointer">
@@ -54,6 +60,7 @@
                         <p class="text-gray-600 mt-5 text-lg font-blod">此分类下还未发布博客哟~</p>
                     </div>
                 </div>
+                </template>
 
                 <!-- 分页 -->
                 <nav aria-label="Page navigation example" v-if="total > 0">
@@ -110,8 +117,12 @@
                 </nav>
             </div>
             <!-- 右边栏 -->
-            <div class="col-span-4 px-3 md:col-span-1 sm:col-span-4">
-                <div class="sticky top-21">
+            <div class="col-span-1">
+                <div class="sticky top-24 space-y-6">
+                    <template v-if="loading">
+                        <SkeletonSidebar />
+                    </template>
+                    <template v-else>
                     <UserInfoCard></UserInfoCard>
 
                     <!-- 文章标签 -->
@@ -124,6 +135,7 @@
                             {{ item.name }}
                         </div>
                     </div>
+                    </template>
                 </div>
 
             </div>
@@ -137,6 +149,8 @@
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import UserInfoCard from '@/components/UserInfoCard.vue'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import SkeletonSidebar from '@/components/SkeletonSidebar.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ref } from 'vue'
 import { getCategoryArticles } from '@/api/frontend/category'
@@ -145,6 +159,15 @@ import { getTags } from '@/api/frontend/tag'
 
 const router = useRouter()
 const route = useRoute()
+
+const loading = ref(true)
+let loadCount = 0
+function trackLoaded() {
+  loadCount++
+  if (loadCount >= 2) {
+    loading.value = false
+  }
+}
 
 const categoryName = ref(route.query.name)
 
@@ -175,6 +198,7 @@ function getArticles(currentNo) {
                 pages.value = res.data.pages
             }
         })
+        .finally(() => trackLoaded())
 }
 getArticles(current.value)
 
@@ -188,15 +212,11 @@ getTags().then((e) => {
     console.log('获取标签数据')
     console.log(e)
     tags.value = e.data
-})
+}).finally(() => trackLoaded())
 
 </script>
 
 <style scoped>
-.container {
-    max-width: 1230px;
-}
-
 .article-img {
     height: 100%;
 }

@@ -122,9 +122,16 @@ const removeTab = (t) => {
     height: 44px;
     z-index: 100;
     transition: all 0.3s;
-    background-color: #fff;
-    border-bottom: 1px solid #d8dce5;
-    box-shadow: 0 1px 3px #00000010, 0 0 3px #00000010;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+html.dark .tag-list {
+    background: rgba(30, 30, 50, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 :deep(.el-tabs__item) {
@@ -155,9 +162,14 @@ const removeTab = (t) => {
 }
 
 .tag-dropdown-btn {
-    @apply bg-white rounded flex items-center ml-auto justify-center px-2;
+    @apply rounded flex items-center ml-auto justify-center px-2;
+    background: rgba(255, 255, 255, 0.5);
     width: 32px;
     height: 32px;
+}
+
+html.dark .tag-dropdown-btn {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 :deep(.el-tabs) {

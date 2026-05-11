@@ -10,8 +10,17 @@
     @apply text-gray-500 text-sm justify-center flex;
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
-    background-color: #fff;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     margin-top: 5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .footer {
+    background: rgba(30, 30, 50, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .quanxiaoha {

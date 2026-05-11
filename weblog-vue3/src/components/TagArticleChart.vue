@@ -3,7 +3,7 @@
         <el-card shadow="never" class="border-1">
             <template #header>
                 <div class="flex justify-between">
-                    <span class="text-sm">文章标签统计（柱状图）</span>
+                    <span class="text-sm">文章标签统计</span>
                 </div>
             </template>
             <!-- card body -->
