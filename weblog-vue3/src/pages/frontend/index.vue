@@ -1,17 +1,20 @@
 <template>
     <Header></Header>
 
-    <div class="container mx-auto max-w-screen-2xl mt-8 px-4">
+    <div class="container mx-auto max-w-screen-xl mt-8 px-4">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- 左边栏 -->
             <div class="col-span-1 lg:col-span-3">
                 <!-- 文章列表 -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SkeletonCard v-for="i in 6" :key="i" />
+                </div>
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div v-for="(article, index) in articles" :key="index"
-                        class="bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 dark:bg-gray-800 dark:border-gray-700">
-                        <a @click="goArticleDetail(article.id)" class="cursor-pointer">
-                            <img class="rounded-t-xl h-56 w-full object-cover" :src="article.titleImage" />
+                        class="group bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl shadow-md hover:-translate-y-1.5 hover:shadow-xl hover:border-white/60 transition-all duration-300 dark:bg-gray-800/75 dark:border-gray-600/30 dark:hover:border-gray-500/50">
+                        <a @click="goArticleDetail(article.id)" class="cursor-pointer overflow-hidden rounded-t-xl">
+                            <img class="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500" :src="article.titleImage" />
                         </a>
                         <div class="p-6">
                             <!-- 标签 -->
@@ -110,39 +113,34 @@
             <!-- 右边栏 -->
             <div class="col-span-1">
                 <div class="sticky top-24 space-y-6">
-                    <UserInfoCard></UserInfoCard>
+                    <template v-if="loading">
+                        <SkeletonSidebar />
+                    </template>
+                    <template v-else>
+                        <UserInfoCard></UserInfoCard>
 
-                    <!-- 文章分类 -->
-                    <div
-                        class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                        <h2 class="mb-2 font-bold text-gray-900 uppercase dark:text-white">分类</h2>
+                        <!-- 文章分类 -->
                         <div
-                            class="text-sm font-medium text-gray-900 bg-white rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <a @click="goCatagoryArticleListPage(item.id, item.name)"
-                                v-for="(item, index) in categories" :key="index"
-                                class="flex items-end block w-full px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white">
-                                <svg class="w-4 h-4 mr-2 mb-2px text-gray-800 inline dark:text-white" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 21 18">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="0.9"
-                                        d="M2.539 17h12.476l4-9H5m-2.461 9a1 1 0 0 1-.914-1.406L5 8m-2.461 9H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.443a1 1 0 0 1 .8.4l2.7 3.6H16a1 1 0 0 1 1 1v2H5" />
-                                </svg>
+                            class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                            <h2 class="mb-2 font-bold text-gray-900 uppercase dark:text-white">分类</h2>
+                            <div @click="goCatagoryArticleListPage(item.id, item.name)" v-for="(item, index) in categories"
+                                :key="index"
+                                class="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 mb-1 px-2.5 py-0.5 rounded hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800 dark:hover:text-blue-300 dark:bg-blue-900 dark:text-blue-300">
                                 {{ item.name }}
-                            </a>
+                            </div>
                         </div>
 
-                    </div>
-
-                    <!-- 文章标签 -->
-                    <div
-                        class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                        <h2 class="mb-2 font-bold text-gray-900 uppercase dark:text-white">标签</h2>
-                        <div @click="goTagArticleListPage(item.id, item.name)" v-for="(item, index) in tags"
-                            :key="index"
-                            class="inline-block bg-green-100 text-green-800 text-xs font-medium mr-2 mb-1 px-2.5 py-0.5 rounded hover:bg-green-200 hover:text-green-900 dark:hover:bg-green-800 dark:hover:text-green-300 dark:bg-green-900 dark:text-green-300">
-                            {{ item.name }}
+                        <!-- 文章标签 -->
+                        <div
+                            class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                            <h2 class="mb-2 font-bold text-gray-900 uppercase dark:text-white">标签</h2>
+                            <div @click="goTagArticleListPage(item.id, item.name)" v-for="(item, index) in tags"
+                                :key="index"
+                                class="inline-block bg-green-100 text-green-800 text-xs font-medium mr-2 mb-1 px-2.5 py-0.5 rounded hover:bg-green-200 hover:text-green-900 dark:hover:bg-green-800 dark:hover:text-green-300 dark:bg-green-900 dark:text-green-300">
+                                {{ item.name }}
+                            </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -155,6 +153,8 @@
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import UserInfoCard from '@/components/UserInfoCard.vue'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import SkeletonSidebar from '@/components/SkeletonSidebar.vue'
 import { useRouter } from 'vue-router'
 import { reactive, ref } from 'vue'
 import { getIndexArticles } from '@/api/frontend/index'
@@ -162,6 +162,15 @@ import { getCategories } from '@/api/frontend/category'
 import { getTags } from '@/api/frontend/tag'
 
 const router = useRouter()
+
+const loading = ref(true)
+let loadCount = 0
+function trackLoaded() {
+  loadCount++
+  if (loadCount >= 3) {
+    loading.value = false
+  }
+}
 
 const goArticleDetail = (articleId) => {
     console.log('跳转详情页' + articleId)
@@ -189,25 +198,29 @@ function getArticles(currentNo) {
                 pages.value = res.data.pages
             }
         })
+        .finally(() => trackLoaded())
 }
 getArticles(current.value)
 
 // 获取分类
 const categories = ref([])
-getCategories().then((e) => {
+getCategories()
+  .then((e) => {
     console.log('获取分类数据')
     console.log(e)
     categories.value = e.data
-})
-
+  })
+  .finally(() => trackLoaded())
 
 // 获取标签
 const tags = ref([])
-getTags().then((e) => {
+getTags()
+  .then((e) => {
     console.log('获取标签数据')
     console.log(e)
     tags.value = e.data
-})
+  })
+  .finally(() => trackLoaded())
 
 
 const goCatagoryArticleListPage = (id, name) => {
@@ -222,10 +235,6 @@ const goTagArticleListPage = (id, name) => {
 </script>
 
 <style>
-.container {
-    max-width: 1230px;
-}
-
 .article-img {
     height: 100%;
 }

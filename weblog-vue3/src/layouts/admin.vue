@@ -12,7 +12,7 @@
             <el-main>
                 <AdminTagList></AdminTagList>
                 <router-view v-slot="{ Component }">
-                    <Transition name="fade">
+                    <Transition name="fade" mode="out-in">
                         <keep-alive :max="10">
                             <component :is="Component"></component>
                         </keep-alive>
@@ -43,32 +43,21 @@ import AdminFooter from '@/layouts/components/AdminFooter.vue';
     padding: 0;
 }
 
+.el-main {
+    background: transparent !important;
+}
+
 .el-footer {
     padding: 0 !important;
 }
 
-.fade-enter-from {
-    opacity: 0;
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.25s ease;
 }
 
-.fade-enter-to {
-    opacity: 1;
-}
-
-.fade-leave-from {
-    opacity: 1;
-}
-
+.fade-enter-from,
 .fade-leave-to {
     opacity: 0;
-}
-
-.fade-leave-active {
-    transition: all 0.3s;
-}
-
-.fade-enter-active {
-    transition: all 0.3s;
-    transition-delay: 0.3s;
 }
 </style>

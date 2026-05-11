@@ -1,6 +1,6 @@
 <template>
 
-    <el-card shadow="never" :body-style="{ padding: '20px' }" class="mb-5 border-1">
+    <el-card  :body-style="{ padding: '20px' }" class="mb-5 border-1">
         <!-- card body -->
         <el-text class="mx-1 mr-3">文章标题</el-text>
         <el-input v-model="searchTitle" placeholder="请输入（模糊查询）" class="w-50 mr-5" />
@@ -15,7 +15,7 @@
     </el-card>
 
 
-    <el-card shadow="never" class="border-1">
+    <el-card  class="border-1">
         <!-- card body -->
         <!-- 新增按钮 -->
         <div>

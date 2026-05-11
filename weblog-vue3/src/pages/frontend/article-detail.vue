@@ -2,10 +2,14 @@
     <Header></Header>
 
     <!-- 文章详情 -->
-    <div class="container mx-auto max-w-screen-2xl mt-8 mb-8 px-4">
+    <div class="container mx-auto max-w-screen-xl mt-8 mb-8 px-4">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- 左边栏 -->
             <div class="col-span-1 lg:col-span-3">
+                <template v-if="loading">
+                    <SkeletonArticleDetail />
+                </template>
+                <template v-else>
                 <div
                     class="bg-white border border-gray-200 p-8 rounded-xl shadow-lg dark:bg-gray-800 dark:border-gray-700">
                     <!-- 面包屑 -->
@@ -111,10 +115,15 @@
                         </div>
                     </div>
                 </div>
+                </template>
             </div>
             <!-- 右边栏 -->
             <div class="col-span-1">
                 <div class="sticky top-24 space-y-6">
+                    <template v-if="loading">
+                        <SkeletonSidebar />
+                    </template>
+                    <template v-else>
                     <UserInfoCard></UserInfoCard>
 
                     <!-- 文章分类 -->
@@ -147,6 +156,7 @@
                             {{ item.name }}
                         </div>
                     </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -159,6 +169,8 @@
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import UserInfoCard from '@/components/UserInfoCard.vue'
+import SkeletonArticleDetail from '@/components/SkeletonArticleDetail.vue'
+import SkeletonSidebar from '@/components/SkeletonSidebar.vue'
 import { useRoute, useRouter } from 'vue-router';
 import { getArticleDetail } from '@/api/frontend/article';
 import { ref, reactive, computed } from 'vue'
@@ -168,6 +180,15 @@ import MarkdownIt from 'markdown-it'
 
 const router = useRouter()
 const route = useRoute()
+
+const loading = ref(true)
+let loadCount = 0
+function trackLoaded() {
+  loadCount++
+  if (loadCount >= 3) {
+    loading.value = false
+  }
+}
 
 // 创建 Markdown 解析器
 const md = new MarkdownIt({
@@ -232,7 +253,7 @@ function queryArticleDetail(articleId) {
         } else {
             article.nextArticleId = null
         }
-    })
+    }).finally(() => trackLoaded())
 }
 queryArticleDetail(route.query.articleId);
 
@@ -249,8 +270,7 @@ getCategories().then((e) => {
     console.log('获取分类数据')
     console.log(e)
     categories.value = e.data
-})
-
+}).finally(() => trackLoaded())
 
 // 获取标签
 const tags = ref([])
@@ -258,7 +278,7 @@ getTags().then((e) => {
     console.log('获取标签数据')
     console.log(e)
     tags.value = e.data
-})
+}).finally(() => trackLoaded())
 
 const goCatagoryArticleListPage = (id, name) => {
     router.push({ path: '/category/list', query: { id: id, name: name } })

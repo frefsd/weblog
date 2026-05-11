@@ -2,7 +2,7 @@
     <div>
         <el-row :gutter="16">
             <el-col :span="6" :offset="0">
-                <el-card shadow="never" class="border-1">
+                <el-card class="border-1">
                     <!-- card body -->
                     <div class="flex items-center">
                         <div class="mr-4"><el-icon class="text-gray-500 text-xl rounded-full bg-gray-100 w-10 h-10">
@@ -16,7 +16,7 @@
                 </el-card>
             </el-col>
             <el-col :span="6" :offset="0">
-                <el-card shadow="never" :body-style="{ padding: '20px' }" class="border-1">
+                <el-card :body-style="{ padding: '20px' }" class="border-1">
                     <div class="flex items-center">
                         <div class="mr-4"><el-icon class="text-gray-500 text-xl rounded-full bg-gray-100 w-10 h-10">
                                 <Folder />
@@ -29,7 +29,7 @@
                 </el-card>
             </el-col>
             <el-col :span="6" :offset="0">
-                <el-card shadow="never" :body-style="{ padding: '20px' }" class="border-1">
+                <el-card :body-style="{ padding: '20px' }" class="border-1">
                     <div class="flex items-center">
                         <div class="mr-4"><el-icon class="text-gray-500 text-xl rounded-full bg-gray-100 w-10 h-10">
                                 <PriceTag />
@@ -42,7 +42,7 @@
                 </el-card>
             </el-col>
             <el-col :span="6" :offset="0">
-                <el-card shadow="never" :body-style="{ padding: '20px' }" class="border-1">
+                <el-card :body-style="{ padding: '20px' }" class="border-1">
                     <div class="flex items-center">
                         <div class="mr-4"><el-icon class="text-gray-500 text-xl rounded-full bg-gray-100 w-10 h-10">
                                 <View />

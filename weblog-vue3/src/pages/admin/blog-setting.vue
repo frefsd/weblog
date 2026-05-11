@@ -1,5 +1,5 @@
 <template>
-    <el-card shadow="never" :body-style="{ padding: '20px' }">
+    <el-card  :body-style="{ padding: '20px' }">
         <el-form :model="form" label-width="160px" :rules="rules">
             <el-form-item label="博客名称" prop="blogName">
                 <el-input v-model="form.blogName" clearable />

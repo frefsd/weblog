@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="grid grid-cols-6 h-screen bg-white">
+        <div class="grid grid-cols-6 h-screen">
             <div class="col-span-6 md:col-span-3 sm:col-span-6">
                 <div
                     class="login-container-left relative overflow-hidden h-full w-full bg-[#001428] animate__animated animate__bounceInLeft">
@@ -18,7 +18,7 @@
                 </div>
             </div>
             <!-- 右边栏 -->
-            <div class="col-span-6 px-3 md:col-span-3 sm:col-span-6">
+            <div class="col-span-6 px-3 md:col-span-3 sm:col-span-6 login-right-panel">
                 <div
                     class="login-container-right flex justify-center items-center flex-col animate__animated animate__bounceInRight animate__fast">
                     <h2 class="font-bold text-3xl text-gray-800 mt-5">欢迎回来</h2>
@@ -27,7 +27,7 @@
                         <span>账号密码登录</span>
                         <span class="h-[1px] w-16 bg-gray-200"></span>
                     </div>
-                    <div>
+                    <div class="login-card">
                         <el-form ref="formRef" :rules="rules" :model="form" class="w-[300px]">
                             <el-form-item prop="username">
                                 <el-input v-model="form.username" :prefix-icon="User" placeholder="请输入用户名" size="large"
@@ -153,7 +153,6 @@ onBeforeUnmount(() => {
 .login-container {
     height: 100vh;
     width: 100%;
-    background-color: #fff;
 }
 
 .login-container-left {
@@ -166,9 +165,30 @@ onBeforeUnmount(() => {
     height: 100%;
 }
 
+.login-right-panel {
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 100%);
+}
+
+html.dark .login-right-panel {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+html.dark .login-card {
+    background: rgba(30, 30, 50, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .login-image {
-    /* max-width: 500px;
-    height: auto; */
     height: 550px;
 }
 

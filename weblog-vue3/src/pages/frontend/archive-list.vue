@@ -1,10 +1,14 @@
 <template>
     <Header></Header>
 
-    <div class="container mx-auto max-w-screen-xl mt-5">
-        <div class="grid grid-cols-4">
+    <div class="container mx-auto max-w-screen-xl mt-8 px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- 左边栏 -->
-            <div class="col-span-4 px-3 md:col-span-3 sm:col-span-4">
+            <div class="col-span-1 lg:col-span-3">
+                <template v-if="loading">
+                    <SkeletonArchive />
+                </template>
+                <template v-else>
                 <div v-for="(item, index) in archives" :key="index"
                     class="p-5 mb-4 border border-gray-200 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
                     <time class="text-lg font-semibold text-gray-900 dark:text-white">{{ item.month }}</time>
@@ -33,6 +37,7 @@
                         </li>
                     </ol>
                 </div>
+                </template>
 
                 <!-- 分页 -->
                 <nav aria-label="Page navigation example" v-if="total > 0">
@@ -89,8 +94,15 @@
 
             </div>
             <!-- 右边栏 -->
-            <div class="col-span-4 px-3 md:col-span-1 sm:col-span-4">
-                <UserInfoCard></UserInfoCard>
+            <div class="col-span-1">
+                <div class="sticky top-24 space-y-6">
+                    <template v-if="loading">
+                        <SkeletonSidebar />
+                    </template>
+                    <template v-else>
+                    <UserInfoCard></UserInfoCard>
+                    </template>
+                </div>
             </div>
         </div>
     </div>
@@ -102,11 +114,15 @@
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import UserInfoCard from '@/components/UserInfoCard.vue'
+import SkeletonArchive from '@/components/SkeletonArchive.vue'
+import SkeletonSidebar from '@/components/SkeletonSidebar.vue'
 import { useRouter } from 'vue-router'
 import { getArchives } from '@/api/frontend/archive'
 import { ref } from 'vue'
 
 const router = useRouter()
+
+const loading = ref(true)
 
 const goArticleDetail = (articleId) => {
     console.log('跳转详情页' + articleId)
@@ -134,6 +150,7 @@ function getArchiveList(currentPage) {
                 pages.value = res.pages
             }
         })
+        .finally(() => { loading.value = false })
 }
 getArchiveList(current.value)
 
