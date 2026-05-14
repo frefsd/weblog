@@ -26,7 +26,11 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 加载博客设置（前后台都需要）
-    await store.dispatch('getBlogSetting')
+    try {
+        await store.dispatch('getBlogSetting')
+    } catch (e) {
+        console.log('获取博客设置失败，不影响导航')
+    }
 
 
     //后台请求逻辑处理

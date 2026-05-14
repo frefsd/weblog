@@ -31,6 +31,18 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'vuex'],
+          'vendor-element': ['element-plus', '@element-plus/icons-vue'],
+          'vendor-highlight': ['highlight.js'],
+          'vendor-echarts': ['echarts'],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

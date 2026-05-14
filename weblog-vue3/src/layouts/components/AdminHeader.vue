@@ -181,17 +181,18 @@ const handleCommand = (e) => {
 // 刷新页面
 const refresh = () => location.reload()
 
-function logout() {
-    showModel('是否确定要退出登录？').then(() => {
+async function logout() {
+    try {
+        await showModel('是否确定要退出登录？')
         console.log('登出')
-        store.dispatch('logout')
+        await store.dispatch('logout')
 
         // 跳转回登录页
         router.push('/login')
 
         // 提示登出成功
         showMessage('退出登录成功', 'success')
-    }).catch(() => { })
+    } catch { }
 }
 </script>
 
