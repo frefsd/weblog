@@ -3,6 +3,9 @@ import { showMessage } from '@/composables/util'
 import { getToken } from '@/composables/auth'
 import store from "@/store";
 
+// 401/403 防重入锁：防止多个并发 403 触发的链式登出
+let isRefreshing = false
+
 const instance = axios.create({
     baseURL: import.meta.env.VITE_APP_BASE_API,
     timeout: 7000
@@ -36,11 +39,18 @@ instance.interceptors.response.use(function (response) {
         return Promise.reject(error);
     }
     let status = error.response.status
-    // 401 Unauthorized，说明登录过期了
-    if (status == 401) {
-        showMessage('登录已过期，请重新登录', 'error')
-        store.dispatch('logout')
-    } else if (status == 403) {
+    // 401/403：登录过期或无权访问 → 自动登出
+    // 使用防重入锁避免链式反应（logoutApi 也会走这个拦截器）
+    if (status == 401 || status == 403) {
+        if (!isRefreshing) {
+            isRefreshing = true
+            showMessage('登录已过期，请重新登录', 'error')
+            store.dispatch('logout').finally(() => {
+                isRefreshing = false
+                window.location.href = '/login'
+            })
+        }
+        return Promise.reject(error);
     }
     let isSuccess = error.response.data.success
     if (!isSuccess) {
