@@ -39,9 +39,8 @@ instance.interceptors.response.use(function (response) {
         return Promise.reject(error);
     }
     let status = error.response.status
-    // 401/403：登录过期或无权访问 → 自动登出
-    // 使用防重入锁避免链式反应（logoutApi 也会走这个拦截器）
-    if (status == 401 || status == 403) {
+    // 401：认证过期/未登录 → 登出 + 跳转登录页
+    if (status == 401) {
         if (!isRefreshing) {
             isRefreshing = true
             showMessage('登录已过期，请重新登录', 'error')
@@ -51,6 +50,28 @@ instance.interceptors.response.use(function (response) {
             })
         }
         return Promise.reject(error);
+    }
+
+    // 403：可能是"认证过期"（Spring 默认，空响应体）或"权限不足"（JSON 响应体）
+    if (status == 403) {
+        // 有 JSON 响应体说明是 GlobalExceptionHandler 返回的"权限不足"（如游客没有 ADMIN 角色）
+        const isPermissionDenied = error.response.data &&
+                                   typeof error.response.data === 'object' &&
+                                   'success' in error.response.data
+
+        if (!isPermissionDenied) {
+            // 空响应体 → 认证过期 → 同 401 处理
+            if (!isRefreshing) {
+                isRefreshing = true
+                showMessage('登录已过期，请重新登录', 'error')
+                store.dispatch('logout').finally(() => {
+                    isRefreshing = false
+                    window.location.href = '/login'
+                })
+            }
+            return Promise.reject(error);
+        }
+        // 有 JSON 响应体 → 权限不足 → 交给下面的 isSuccess 逻辑展示错误消息，不登出
     }
     let isSuccess = error.response.data.success
     if (!isSuccess) {
