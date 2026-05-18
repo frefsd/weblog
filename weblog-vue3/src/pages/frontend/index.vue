@@ -119,6 +119,8 @@
                     <template v-else>
                         <UserInfoCard></UserInfoCard>
 
+                        <GameWidget></GameWidget>
+
                         <!-- 文章分类 -->
                         <div
                             class="mb-3 w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
@@ -153,6 +155,7 @@
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import UserInfoCard from '@/components/UserInfoCard.vue'
+import GameWidget from '@/pages/frontend/components/GameWidget.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
 import SkeletonSidebar from '@/components/SkeletonSidebar.vue'
 import { useRouter } from 'vue-router'

@@ -102,3 +102,12 @@ html.dark .glass {
   background: rgba(30, 30, 50, 0.7) !important;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* 游戏弹窗遮罩层 —— 确保在最顶层 */
+.game-dialog-modal {
+  z-index: 99999 !important;
+}
+
+.game-dialog {
+  z-index: 100000 !important;
+}
