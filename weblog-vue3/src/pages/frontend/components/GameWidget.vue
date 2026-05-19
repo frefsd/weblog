@@ -19,10 +19,7 @@
         <!-- 游戏中状态 -->
         <template v-else-if="status === 'playing'">
             <div class="flex flex-col items-center py-1">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-xl mb-2">
-                    {{ emotionEmoji }}
-                </div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">心情：{{ emotionLabel }}</span>
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-xl mb-2">😊</div>
                 <div class="w-full meter-mini">
                     <div class="meter-mini-track">
                         <div class="meter-mini-fill" :style="{ width: forgiveness + '%' }"></div>
@@ -50,34 +47,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import GameDialog from './GameDialog.vue'
 
 const status = ref('idle') // idle | playing | won | lost
 const forgiveness = ref(20)
-const currentEmotion = ref(null)
 const dialogVisible = ref(false)
-
-const emotionMap = {
-    angry: { label: '生气', emoji: '😤' },
-    sad: { label: '委屈', emoji: '😢' },
-    softening: { label: '心软', emoji: '😌' },
-    happy: { label: '开心', emoji: '😊' }
-}
-
-const emotionLabel = computed(() => {
-    return emotionMap[currentEmotion.value]?.label || '生气'
-})
-
-const emotionEmoji = computed(() => {
-    return emotionMap[currentEmotion.value]?.emoji || '😤'
-})
 
 function startGame() {
     dialogVisible.value = true
     status.value = 'playing'
     forgiveness.value = 20
-    currentEmotion.value = 'angry'
 }
 
 function openDialog() {
@@ -88,7 +68,6 @@ function onGameStatusChange(newStatus) {
     if (newStatus === 'idle') {
         status.value = 'idle'
         forgiveness.value = 20
-        currentEmotion.value = null
     } else if (newStatus === 'won') {
         status.value = 'won'
         forgiveness.value = 100

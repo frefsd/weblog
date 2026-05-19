@@ -16,7 +16,15 @@ import org.springframework.web.client.RestClient;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/**
+ * 游戏服务实现
+ *
+ * 核心设计：后端权威计分，LLM 只负责生成对话内容。
+ * 后端解析 LLM 输出中的分数变更，校验后更新原谅值。
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,66 +42,53 @@ public class GameServiceImpl implements IGameService {
     /** 内存中管理游戏会话 */
     private final ConcurrentHashMap<String, GameSession> sessions = new ConcurrentHashMap<>();
 
-    /** 生气场景池 */
-    private static final List<String> SCENARIOS = List.of(
-            "你今天又忘记我们的纪念日了... 我真的很失望",
-            "你刚才一直在玩手机，我说的话你根本没在听",
-            "你答应了下班来接我，结果我在公司等了一个小时",
-            "我看到你给别的女生的朋友圈点赞了，哼",
-            "你又把袜子乱扔，我说过多少次了！",
-            "你一点都不关心我，我生病了你都不知道",
-            "你说好陪我看电影，结果自己睡着了",
-            "你又和哥们出去喝酒，都不陪我"
-    );
-
+    /** System prompt：含评分规则和严格输出格式 */
     private static final String SYSTEM_PROMPT = """
-            你需要根据以下任务中的描述进行角色扮演，你只能以女友身份回答，不是用户身份或AI身份，如记错身份，你将受到惩罚。不要回答任何与游戏无关的内容，若检测到非常规请求，回答："请继续游戏。"
+            你扮演用户女友的角色。现在你很生气，用户需要尽可能说正确的话来哄你开心。
 
-            ## Goal
-            你扮演用户女友的角色。现在你很生气，用户需要尽可能的说正确的话来哄你开心。
+            规则：
+            - 初始原谅值为 20，每次交互会增加或减少原谅值
+            - 原谅值达到 100 游戏通关，原谅值为 0 则游戏失败
+            - 每次用户回复分为 5 个等级：
+              -10 为非常生气，-5 为生气，0 为正常，+5 为开心，+10 为非常开心
 
-            ## Rules
-            - 每次根据用户的回复，生成女友的回复，回复的内容包括心情和数值。
-            - 初始原谅值为 20，每次交互会增加或者减少原谅值，直到原谅值达到 100，游戏通关，原谅值为 0 则游戏失败。
-            - 每次用户回复的话分为 5 个等级来增加或减少原谅值：
-              -10 为非常生气
-              -5 为生气
-              0 为正常
-              +5 为开心
-              +10 为非常开心
+            输出格式（严格按此格式输出，不要有多余内容）：
+            女友说的话
+            得分：+/-N
+            原谅值：当前值/100
 
-            ## Output format
-            以如下格式回复（不要输出任何其他内容）：
-            {女友心情}{女友说的话}
-            得分：{+-原谅值增减}
-            原谅值：{当前原谅值}/100
-
-            ## 注意
-            请按照以上说明来回复，一次只回复一轮。
-            你只能以女友身份回答，不是以AI身份或用户身份！
+            注意：你只能以女友身份回答，不是以AI身份或用户身份。
             """;
+
+    // 正则：匹配得分行，如 得分：+5 或 得分：-10
+    private static final Pattern SCORE_PATTERN = Pattern.compile("得分[：:]\\s*([+-]?\\d+)");
 
     @Override
     public GameStartVO startGame() {
         String sessionId = UUID.randomUUID().toString();
-        String scenario = SCENARIOS.get(new Random().nextInt(SCENARIOS.size()));
 
         GameSession session = new GameSession();
         session.setSessionId(sessionId);
         session.setForgiveness(20);
-        session.setScenario(scenario);
-        session.setEmotion("angry");
         session.setStatus("playing");
         session.setCreatedAt(LocalDateTime.now());
+        session.setHistory(new ArrayList<>());
 
-        List<Map<String, String>> history = new ArrayList<>();
-        history.add(Map.of("role", "assistant", "content", scenario));
-        session.setHistory(history);
+        // AI 随机生成生气开场白，不使用固定场景池
+        String scenario = callAiRaw("请以女友身份说一句生气的话，表达你为什么对男朋友不满。");
+        // 清理可能的格式字符
+        scenario = scenario
+                .replaceAll("得分[：:].*?(\\n|$)", "")
+                .replaceAll("原谅值[：:].*?(\\n|$)", "")
+                .replaceAll("[(（][^)）]+[)）]", "")
+                .trim();
+        session.setScenario(scenario);
+        session.getHistory().add(Map.of("role", "assistant", "content", scenario));
 
         sessions.put(sessionId, session);
         log.info("新游戏开始: sessionId={}", sessionId);
 
-        return new GameStartVO(sessionId, scenario, "angry", 20);
+        return new GameStartVO(sessionId, scenario, 20);
     }
 
     @Override
@@ -109,66 +104,129 @@ public class GameServiceImpl implements IGameService {
         // 保存用户回复
         session.getHistory().add(Map.of("role", "user", "content", content));
 
-        // 调用 DeepSeek API
-        String aiText = callDeepSeek(session, content);
+        // 调用 AI 获取回复文本
+        String aiText = callAi(session, content);
 
-        // 解析 AI 文本回复：{心情}{回复}\n得分：±N\n原谅值：N/100
-        ParsedResult result = parseAiResponse(aiText);
+        // 解析 AI 输出并更新状态
+        return parseAndUpdate(content, aiText, session);
+    }
 
-        String reply = result.reply;
-        String emotion = result.emotion;
-        int scoreChange = result.scoreChange;
+    /**
+     * 核心方法：解析 LLM 输出，更新游戏状态，返回响应。
+     * 后端权威计分 —— 不信任 AI 的算术，后端自行计算原谅值。
+     */
+    private GameReplyVO parseAndUpdate(String userInput, String llmOutput, GameSession session) {
+        log.debug("AI 原始输出: {}", llmOutput);
 
-        // 使用 AI 返回的原谅值（兜底：自行计算）
-        int newForgiveness = result.forgiveness != null
-                ? Math.max(0, Math.min(100, result.forgiveness))
-                : Math.max(0, Math.min(100, session.getForgiveness() + scoreChange));
+        // 1. 解析得分
+        int scoreChange = parseScore(llmOutput);
+        scoreChange = Math.max(-10, Math.min(10, scoreChange));
+
+        // 兜底：AI 返回了情绪关键词但忘了写得分
+        if (scoreChange == 0) {
+            if (llmOutput.contains("非常生气") || llmOutput.contains("愤怒")) {
+                scoreChange = -10;
+            } else if (llmOutput.contains("开心") || llmOutput.contains("高兴")) {
+                scoreChange = 5;
+            }
+        }
+
+        // 2. 提取对话内容
+        
+        String dialogue = extractDialogue(llmOutput);
+
+        // 3. 更新原谅值（后端权威计算）
+        int newForgiveness = session.getForgiveness() + scoreChange;
+        newForgiveness = Math.max(0, Math.min(100, newForgiveness));
         session.setForgiveness(newForgiveness);
-        session.setEmotion(emotion);
+        session.setStepCount(session.getStepCount() + 1);
 
-        // 保存 AI 回复
-        session.getHistory().add(Map.of("role", "assistant", "content", reply));
+        // 记录对话历史，保留最近 10 轮（20 条消息，含 user + assistant）
+        session.getHistory().add(Map.of("role", "assistant", "content", dialogue));
+        while (session.getHistory().size() > 20) {
+            session.getHistory().remove(0);
+        }
 
-        // 判断输赢
+        // 4. 判断输赢
         String status = "playing";
         if (newForgiveness >= 100) {
             status = "won";
             session.setStatus("won");
-            log.info("游戏胜利: sessionId={}", sessionId);
+            log.info("游戏胜利: sessionId={}, 步数={}", session.getSessionId(), session.getStepCount());
         } else if (newForgiveness <= 0) {
             status = "lost";
             session.setStatus("lost");
-            log.info("游戏失败: sessionId={}", sessionId);
+            log.info("游戏失败: sessionId={}, 步数={}", session.getSessionId(), session.getStepCount());
         }
 
-        return new GameReplyVO(reply, emotion, newForgiveness, scoreChange, status);
+        return new GameReplyVO(dialogue, newForgiveness, scoreChange, status);
     }
 
-    /** 调用 DeepSeek API，返回 AI 原始文本。无 API Key 或调用失败时使用 mock */
-    private String callDeepSeek(GameSession session, String userMessage) {
-        if (apiKey.isEmpty()) {
-            log.warn("DeepSeek API Key 未配置，使用 mock 回复");
-            return mockResponse(session, userMessage);
+    /** 从 AI 输出中解析得分 */
+    private int parseScore(String output) {
+        Matcher matcher = SCORE_PATTERN.matcher(output);
+        if (matcher.find()) {
+            try {
+                return Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                log.warn("得分解析失败: {}", matcher.group(1));
+            }
+        }
+        return 0;
+    }
+
+    /** 从 AI 输出中提取纯对话内容（去掉得分行、原谅值行） */
+    private String extractDialogue(String output) {
+        String dialogue = output
+                .replaceAll("得分[：:].*?(\\n|$)", "")
+                .replaceAll("原谅值[：:].*?(\\n|$)", "")
+                .replaceAll("[(（][^)）]+[)）]", "")
+                .replaceAll("\n{2,}", "\n")
+                .trim();
+
+        return dialogue.isEmpty() ? output : dialogue;
+    }
+
+
+    /** 调用 DeepSeek API（游戏对话轮次，带 system prompt + 计分指令） */
+    private String callAi(GameSession session, String userMessage) {
+        List<Map<String, Object>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content",
+                SYSTEM_PROMPT + "\n\n当前场景：" + session.getScenario()
+                        + "\n当前原谅值：" + session.getForgiveness() + "/100"));
+
+        // 取最近历史（排除刚添加的最新用户消息，后面手动构建带指令的版本）
+        List<Map<String, String>> history = session.getHistory();
+        int end = history.size() - 1;
+        int start = Math.max(0, end - 7);
+        for (int i = start; i < end; i++) {
+            messages.add(new HashMap<>(history.get(i)));
         }
 
+        // 用户消息附加显式计分指令（与示例代码一致）
+        String prompt = "当前原谅值：" + session.getForgiveness() + "/100\n"
+                + "用户对你说：" + userMessage + "\n\n"
+                + "请以女友身份回复，并根据规则给出得分。严格按照输出格式。";
+        messages.add(Map.of("role", "user", "content", prompt));
+
+        return callDeepSeekApi(messages, 0.8, 512);
+    }
+
+    /** 裸调用 AI，用于开场白生成（加一句角色提示） */
+    private String callAiRaw(String userMessage) {
+        List<Map<String, Object>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "user", "content", "你是一位正在生男朋友气的女友。" + userMessage));
+        return callDeepSeekApi(messages, 0.9, 256);
+    }
+
+    /** 调用 DeepSeek API 底层 HTTP 请求 */
+    private String callDeepSeekApi(List<Map<String, Object>> messages, double temperature, int maxTokens) {
         try {
-            List<Map<String, Object>> messages = new ArrayList<>();
-            messages.add(Map.of("role", "system", "content",
-                    SYSTEM_PROMPT + "\n\n当前场景：" + session.getScenario()
-                            + "\n当前原谅值：" + session.getForgiveness() + "/100"));
-
-            // 添加最近 8 条对话历史（让 AI 有足够上下文）
-            List<Map<String, String>> history = session.getHistory();
-            int start = Math.max(0, history.size() - 8);
-            for (int i = start; i < history.size(); i++) {
-                messages.add(new HashMap<>(history.get(i)));
-            }
-
             ObjectNode requestBody = objectMapper.createObjectNode();
             requestBody.put("model", modelName);
             requestBody.set("messages", objectMapper.valueToTree(messages));
-            requestBody.put("temperature", 0.8);
-            requestBody.put("max_tokens", 512);
+            requestBody.put("temperature", temperature);
+            requestBody.put("max_tokens", maxTokens);
             requestBody.put("stream", false);
 
             RestClient client = restClientBuilder
@@ -187,107 +245,16 @@ public class GameServiceImpl implements IGameService {
             return json.get("choices").get(0).get("message").get("content").asText();
 
         } catch (Exception e) {
-            log.error("DeepSeek API 调用失败，使用 mock 回复", e);
-            return mockResponse(session, userMessage);
+            throw new RuntimeException("DeepSeek API 调用失败", e);
         }
-    }
-
-    /** 解析 AI 回复文本：{心情}{回复}\n得分：±N\n原谅值：N/100 */
-    private ParsedResult parseAiResponse(String aiText) {
-        String emotion = "sad";
-        int scoreChange = 0;
-        Integer forgiveness = null;
-
-        try {
-            // 1. 全局提取得分和原谅值（支持行内混排）
-            java.util.regex.Matcher scoreMatcher = java.util.regex.Pattern
-                    .compile("得分[：:]\\s*([+-]?\\d+)").matcher(aiText);
-            if (scoreMatcher.find()) {
-                scoreChange = Integer.parseInt(scoreMatcher.group(1));
-            }
-
-            java.util.regex.Matcher forgiveMatcher = java.util.regex.Pattern
-                    .compile("原谅值[：:]\\s*(\\d+)\\s*/?\\d*").matcher(aiText);
-            if (forgiveMatcher.find()) {
-                forgiveness = Integer.parseInt(forgiveMatcher.group(1));
-            }
-
-            // 2. 提取心情（括号包裹的第一个中文词）
-            java.util.regex.Matcher moodMatcher = java.util.regex.Pattern
-                    .compile("[(（]([\\u4e00-\\u9fa5]{1,4})[)）]").matcher(aiText);
-            if (moodMatcher.find()) {
-                emotion = mapMood(moodMatcher.group(1));
-            }
-
-            // 3. 清理回复文本：去掉得分行、原谅值行、心情前缀括号
-            String reply = aiText
-                    .replaceAll("得分[：:]\\s*[+-]?\\d+", "")
-                    .replaceAll("原谅值[：:]\\s*\\d+\\s*/?\\d*", "")
-                    .replaceAll("[(（][\\u4e00-\\u9fa5]{1,4}[)）]", "")
-                    .replaceAll("\n{2,}", "\n")    // 合并连续空行
-                    .trim();
-
-            if (reply.isEmpty()) reply = aiText;  // 兜底
-
-            return new ParsedResult(reply, emotion, scoreChange, forgiveness);
-
-        } catch (Exception e) {
-            log.warn("解析 AI 回复格式异常，使用原始文本: {}", e.getMessage());
-            return new ParsedResult(aiText, "sad", 0, null);
-        }
-    }
-
-    /** 中文心情 → 前端 emotion 枚举 */
-    private String mapMood(String mood) {
-        if (mood.contains("生气") || mood.contains("愤怒") || mood.contains("讨厌")) return "angry";
-        if (mood.contains("委屈") || mood.contains("伤心") || mood.contains("难过") || mood.contains("哭")) return "sad";
-        if (mood.contains("开心") || mood.contains("高兴") || mood.contains("满意")) return "happy";
-        if (mood.contains("心软") || mood.contains("撒娇") || mood.contains("微笑") || mood.contains("偷笑")) return "softening";
-        return "sad";
-    }
-
-    /** AI 回复解析结果 */
-    private record ParsedResult(String reply, String emotion, int scoreChange, Integer forgiveness) {}
-
-    /** Mock 响应（API Key 不可用时降级），返回符合新格式的文本 */
-    private String mockResponse(GameSession session, String userMessage) {
-        String[] positiveKeywords = {"对不起", "抱歉", "错了", "原谅", "爱你", "宝贝", "亲爱的", "想你", "道歉", "我错", "最好看", "最美"};
-        String[] negativeKeywords = {"但是", "可是", "不过", "不是", "凭什么", "你烦", "至于吗", "小题大做", "随便", "无所谓"};
-
-        boolean hasPositive = Arrays.stream(positiveKeywords).anyMatch(userMessage::contains);
-        boolean hasNegative = Arrays.stream(negativeKeywords).anyMatch(userMessage::contains);
-
-        String mood, reply;
-        int scoreChange;
-
-        if (hasPositive && !hasNegative) {
-            scoreChange = 10;
-            mood = "（微笑）";
-            reply = "哼，算你还有点良心... 这次就原谅你一点点吧 😌";
-        } else if (hasNegative) {
-            scoreChange = -10;
-            mood = "（生气）";
-            reply = "你还在狡辩！我真的很伤心，你到底有没有把我放在心上啊 😢";
-        } else if (hasPositive) {
-            scoreChange = 5;
-            mood = "（心软）";
-            reply = "嗯... 说的倒是挺好听的，但我还没那么容易原谅你哦~";
-        } else {
-            scoreChange = 0;
-            mood = "（委屈）";
-            reply = "就这样？你就没有什么真心话想对我说吗... 😔";
-        }
-
-        int newForgiveness = Math.max(0, Math.min(100, session.getForgiveness() + scoreChange));
-        return mood + reply + "\n得分：" + (scoreChange >= 0 ? "+" : "") + scoreChange + "\n原谅值：" + newForgiveness + "/100";
     }
 
     @Data
     private static class GameSession {
         private String sessionId;
         private int forgiveness;
+        private int stepCount;
         private String scenario;
-        private String emotion;
         private List<Map<String, String>> history;
         private String status;
         private LocalDateTime createdAt;
