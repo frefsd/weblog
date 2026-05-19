@@ -8,6 +8,5 @@ import lombok.Data;
 public class GameStartVO {
     private String sessionId;
     private String scenario;
-    private String emotion;
     private int forgiveness;
 }

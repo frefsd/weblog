@@ -8,9 +8,6 @@
             <div class="meter-section">
                 <div class="meter-header">
                     <span class="meter-label">女友原谅值</span>
-                    <span class="emotion-badge" v-if="currentEmotion">
-                        {{ emotionLabel }} {{ emotionEmoji }}
-                    </span>
                 </div>
                 <div class="meter-track">
                     <div class="meter-fill" :style="{ width: forgiveness + '%' }"></div>
@@ -29,6 +26,10 @@
                 <div v-for="(msg, i) in messages" :key="i"
                     :class="['bubble', msg.role === 'user' ? 'bubble-user' : 'bubble-ai']">
                     <div class="bubble-content">{{ msg.content }}</div>
+                    <div v-if="msg.role === 'assistant' && msg.scoreChange"
+                        :class="['score-tag', msg.scoreChange >= 0 ? 'score-up' : 'score-down']">
+                        {{ msg.scoreChange >= 0 ? '+' : '' }}{{ msg.scoreChange }}
+                    </div>
                 </div>
                 <div v-if="loading" class="loading-dots">
                     <span class="dot"></span>
@@ -41,7 +42,7 @@
             <div v-if="gameStatus === 'won' || gameStatus === 'lost'" class="result-overlay">
                 <div class="result-card">
                     <div class="result-icon">{{ gameStatus === 'won' ? '🎉' : '💔' }}</div>
-                    <p class="result-title">{{ gameStatus === 'won' ? '小暖已经原谅你啦 ❤️' : '小暖伤心地走了... 💔' }}</p>
+                    <p class="result-title">{{ gameStatus === 'won' ? '恭喜你通关了，你的女朋友已经原谅你了！' : '游戏结束，你的女朋友已经甩了你' }}</p>
                     <p class="result-score">最终原谅值：{{ forgiveness }} / 100</p>
                     <div class="result-actions">
                         <el-button type="primary" class="restart-btn" @click="restartGame">再来一次</el-button>
@@ -87,26 +88,9 @@ const loading = ref(false)
 // 游戏状态
 const sessionId = ref('')
 const forgiveness = ref(20)
-const currentEmotion = ref(null)
 const scenario = ref('')
 const messages = ref([])
 const gameStatus = ref('playing') // playing | won | lost
-
-// 情绪映射
-const emotionMap = {
-    angry: { label: '生气', emoji: '😤' },
-    sad: { label: '委屈', emoji: '😢' },
-    softening: { label: '心软', emoji: '😌' },
-    happy: { label: '开心', emoji: '😊' }
-}
-
-const emotionLabel = computed(() => {
-    return emotionMap[currentEmotion.value]?.label || ''
-})
-
-const emotionEmoji = computed(() => {
-    return emotionMap[currentEmotion.value]?.emoji || ''
-})
 
 // 开始游戏
 async function initGame() {
@@ -116,7 +100,6 @@ async function initGame() {
         if (res.success) {
             sessionId.value = res.data.sessionId
             scenario.value = res.data.scenario
-            currentEmotion.value = res.data.emotion
             forgiveness.value = res.data.forgiveness
             messages.value = []
             gameStatus.value = 'playing'
@@ -150,7 +133,6 @@ async function handleSend() {
                 scoreChange: data.scoreChange
             })
             forgiveness.value = data.forgiveness
-            currentEmotion.value = data.emotion
 
             if (data.status === 'won' || data.status === 'lost') {
                 gameStatus.value = data.status
@@ -174,7 +156,6 @@ async function handleSend() {
 async function restartGame() {
     replyText.value = ''
     messages.value = []
-    currentEmotion.value = null
     gameStatus.value = 'playing'
     await initGame()
 }
@@ -235,12 +216,6 @@ function handleClose() {
     font-size: 16px;
     font-weight: 600;
     color: #374151;
-}
-
-.emotion-badge {
-    font-size: 13px;
-    color: #ec4899;
-    font-weight: 500;
 }
 
 .meter-track {
@@ -336,6 +311,26 @@ function handleClose() {
     background: linear-gradient(135deg, #ec4899, #a855f7);
     color: white;
     border-radius: 12px 12px 4px 12px;
+}
+
+.score-tag {
+    position: absolute;
+    bottom: -8px;
+    right: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.score-up {
+    color: #22c55e;
+    background: #dcfce7;
+}
+
+.score-down {
+    color: #ef4444;
+    background: #fce7e7;
 }
 
 /* 加载动画 */

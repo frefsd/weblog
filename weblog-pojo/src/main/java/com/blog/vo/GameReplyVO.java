@@ -7,7 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class GameReplyVO {
     private String reply;
-    private String emotion;
     private int forgiveness;
     private int scoreChange;
     private String status; // playing | won | lost
