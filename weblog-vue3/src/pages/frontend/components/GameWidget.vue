@@ -1,5 +1,6 @@
 <template>
-    <div class="game-widget w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+    <div
+        class="game-widget w-full font-medium p-5 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
         <!-- 标题 -->
         <h2 class="mb-3 font-bold text-gray-900 uppercase dark:text-white flex items-center gap-1">
             <span>💕</span> 哄女友小游戏
@@ -8,7 +9,8 @@
         <!-- 空闲状态 -->
         <template v-if="status === 'idle'">
             <div class="flex flex-col items-center py-2">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-2xl mb-3">
+                <div
+                    class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-2xl mb-3">
                     😊
                 </div>
                 <span class="text-sm text-gray-500 dark:text-gray-400 mb-3">来哄哄小暖吧~</span>
@@ -19,7 +21,9 @@
         <!-- 游戏中状态 -->
         <template v-else-if="status === 'playing'">
             <div class="flex flex-col items-center py-1">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-xl mb-2">😊</div>
+                <div
+                    class="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-xl mb-2">
+                    😊</div>
                 <div class="w-full meter-mini">
                     <div class="meter-mini-track">
                         <div class="meter-mini-fill" :style="{ width: forgiveness + '%' }"></div>
@@ -35,7 +39,7 @@
             <div class="flex flex-col items-center py-2">
                 <div class="text-2xl mb-2">{{ status === 'won' ? '🎉' : '💔' }}</div>
                 <span class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                    {{ status === 'won' ? '小暖已经原谅你啦 ❤️' : '小暖伤心地走了... 💔' }}
+                    {{ status === 'won' ? '恭喜你通关了，你的女朋友已经原谅你了！' : '游戏结束，你的女朋友已经甩了你' }}
                 </span>
                 <el-button class="start-btn" size="small" @click="startGame">🔄 再来一次</el-button>
             </div>

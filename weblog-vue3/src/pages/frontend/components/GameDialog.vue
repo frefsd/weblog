@@ -68,7 +68,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { startGame, sendReply } from '@/api/frontend/game'
+import { startGame, sendReply, closeGame } from '@/api/frontend/game'
 
 const props = defineProps({
     modelValue: Boolean
@@ -180,6 +180,9 @@ function scrollToBottom() {
 }
 
 function handleClose() {
+    if (sessionId.value) {
+        closeGame(sessionId.value)
+    }
     emit('game-status-change', 'idle')
 }
 </script>
