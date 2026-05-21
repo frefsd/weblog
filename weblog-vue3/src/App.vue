@@ -37,13 +37,18 @@ html.dark body {
 }
 
 #nprogress .bar {
-   background: #409eff!important;
+  background: #409eff !important;
 }
 
 /* 骨架屏 shimmer 动画 */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .skeleton {

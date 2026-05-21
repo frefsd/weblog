@@ -10,7 +10,9 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
@@ -36,7 +38,7 @@ public class GameServiceImpl implements IGameService {
     @Value("${deepseek.api-key:}")
     private String apiKey;
 
-    @Value("${deepseek.model-name:deepseek-chat}")
+    @Value("${deepseek.model-name:deepseek-v4-flash}")
     private String modelName;
 
     /** 内存中管理游戏会话 */
@@ -72,6 +74,7 @@ public class GameServiceImpl implements IGameService {
         session.setForgiveness(20);
         session.setStatus("playing");
         session.setCreatedAt(LocalDateTime.now());
+        session.setLastActiveAt(LocalDateTime.now());
         session.setHistory(new ArrayList<>());
 
         // AI 随机生成生气开场白，不使用固定场景池
@@ -103,6 +106,7 @@ public class GameServiceImpl implements IGameService {
 
         // 保存用户回复
         session.getHistory().add(Map.of("role", "user", "content", content));
+        session.setLastActiveAt(LocalDateTime.now());
 
         // 调用 AI 获取回复文本
         String aiText = callAi(session, content);
@@ -160,6 +164,14 @@ public class GameServiceImpl implements IGameService {
         }
 
         return new GameReplyVO(dialogue, newForgiveness, scoreChange, status);
+    }
+
+    @Override
+    public void closeGame(String sessionId) {
+        GameSession removed = sessions.remove(sessionId);
+        if (removed != null) {
+            log.info("游戏会话已关闭: sessionId={}", sessionId);
+        }
     }
 
     /** 从 AI 输出中解析得分 */
@@ -229,10 +241,15 @@ public class GameServiceImpl implements IGameService {
             requestBody.put("max_tokens", maxTokens);
             requestBody.put("stream", false);
 
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(10_000);
+            factory.setReadTimeout(30_000);
+
             RestClient client = restClientBuilder
                     .baseUrl("https://api.deepseek.com/v1")
                     .defaultHeader("Authorization", "Bearer " + apiKey)
                     .defaultHeader("Content-Type", "application/json")
+                    .requestFactory(factory)
                     .build();
 
             String responseBody = client.post()
@@ -258,5 +275,18 @@ public class GameServiceImpl implements IGameService {
         private List<Map<String, String>> history;
         private String status;
         private LocalDateTime createdAt;
+        private LocalDateTime lastActiveAt;
+    }
+
+    /** 每分钟清理超过 30 分钟不活跃的会话 */
+    @Scheduled(fixedRate = 60000)
+    public void cleanupExpiredSessions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
+        sessions.values().removeIf(s -> s.getLastActiveAt() == null
+                || s.getLastActiveAt().isBefore(cutoff));
+        int size = sessions.size();
+        if (size > 0) {
+            log.debug("当前活跃游戏会话数: {}", size);
+        }
     }
 }

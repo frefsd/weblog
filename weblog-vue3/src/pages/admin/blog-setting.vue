@@ -63,8 +63,6 @@ const form = reactive({
     introduction: '',
     githubHome: '',
     giteeHome: '',
-    csdnHome: '',
-    zhihuHome: '',
 })
 
 const rules = {
@@ -113,12 +111,6 @@ function initBlogSetting() {
 
             isGiteeCheck.value = !!data.giteeHome
             form.giteeHome = data.giteeHome || ''
-
-            isCSDNCheck.value = !!data.csdnHome
-            form.csdnHome = data.csdnHome || ''
-
-            isZhihuCheck.value = !!data.zhihuHome
-            form.zhihuHome = data.zhihuHome || ''
         }
     })
 }

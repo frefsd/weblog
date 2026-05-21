@@ -8,4 +8,6 @@ public interface IGameService {
     GameStartVO startGame();
 
     GameReplyVO processReply(String sessionId, String content);
+
+    void closeGame(String sessionId);
 }

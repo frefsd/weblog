@@ -12,32 +12,19 @@
             <span class="logo-dot"></span>
           </div>
           <h1 class="card-title">
-            <span v-for="(char, i) in '欢迎回来'" :key="i" class="char-bounce" :style="{ animationDelay: i * 0.12 + 's' }">{{ char }}</span>
+            <span v-for="(char, i) in '欢迎回来'" :key="i" class="char-bounce"
+              :style="{ animationDelay: i * 0.12 + 's' }">{{ char }}</span>
           </h1>
         </div>
 
         <!-- 表单 -->
         <el-form ref="formRef" :rules="rules" :model="form" class="login-form">
           <el-form-item prop="username">
-            <el-input
-              v-model="form.username"
-              :prefix-icon="User"
-              placeholder="用户名"
-              size="large"
-              clearable
-            />
+            <el-input v-model="form.username" :prefix-icon="User" placeholder="用户名" size="large" clearable />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input
-              v-model="form.password"
-              type="password"
-              autocomplete="off"
-              :prefix-icon="Lock"
-              placeholder="密码"
-              show-password
-              size="large"
-              clearable
-            />
+            <el-input v-model="form.password" type="password" autocomplete="off" :prefix-icon="Lock" placeholder="密码"
+              show-password size="large" clearable />
           </el-form-item>
           <el-form-item>
             <el-button round type="primary" @click="onSubmit" :loading="loading" class="login-btn" size="large">
@@ -150,6 +137,7 @@ onBeforeUnmount(() => document.removeEventListener('keyup', onKeyUp))
     opacity: 0;
     transform: translateY(30px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -179,12 +167,26 @@ onBeforeUnmount(() => document.removeEventListener('keyup', onKeyUp))
   animation: dotPulse 2s ease-in-out infinite;
 }
 
-.logo-dot:nth-child(2) { animation-delay: 0.3s; }
-.logo-dot:nth-child(3) { animation-delay: 0.6s; }
+.logo-dot:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.logo-dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
 
 @keyframes dotPulse {
-  0%, 100% { opacity: 0.4; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 .card-title {
@@ -208,10 +210,12 @@ onBeforeUnmount(() => document.removeEventListener('keyup', onKeyUp))
     opacity: 0;
     transform: translateY(12px) scale(0.8);
   }
+
   60% {
     opacity: 1;
     transform: translateY(-4px) scale(1.1);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
