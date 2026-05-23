@@ -32,8 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-weblog-server/src/main/resources/application.yaml
 weblog-server/src/main/resources/application-druid.yaml
+weblog-server/src/main/resources/application-local.yaml
 # logs (runtime output)
 logs/
 *.log
