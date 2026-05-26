@@ -19,6 +19,7 @@
     <modules>
         <module>weblog-common</module>
         <module>weblog-pojo</module>
+        <module>weblog-monitor</module>
         <module>weblog-server</module>
     </modules>
 
@@ -149,6 +150,11 @@
             <dependency>
                 <groupId>com.blog</groupId>
                 <artifactId>weblog-pojo</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.blog</groupId>
+                <artifactId>weblog-monitor</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

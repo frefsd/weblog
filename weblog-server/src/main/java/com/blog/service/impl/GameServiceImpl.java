@@ -6,6 +6,7 @@ import com.blog.vo.GameStartVO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.blog.MonitorExternal;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -232,6 +233,7 @@ public class GameServiceImpl implements IGameService {
     }
 
     /** 调用 DeepSeek API 底层 HTTP 请求 */
+    @MonitorExternal(service = "DeepSeek")
     private String callDeepSeekApi(List<Map<String, Object>> messages, double temperature, int maxTokens) {
         try {
             ObjectNode requestBody = objectMapper.createObjectNode();

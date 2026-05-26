@@ -63,6 +63,11 @@
             <artifactId>weblog-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.blog</groupId>
+            <artifactId>weblog-monitor</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Spring Data Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
