@@ -178,4 +178,62 @@ CREATE TABLE `visitor_record`  (
   INDEX `ip_visit_time`(`ip_address` ASC, `visit_time` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '访客记录表' ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Table structure for monitor_log
+-- ----------------------------
+DROP TABLE IF EXISTS `monitor_log`;
+CREATE TABLE `monitor_log`  (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志id',
+  `service_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '服务名',
+  `level` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'INFO' COMMENT '日志级别：INFO / WARN / ERROR',
+  `type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '日志类型：HTTP_REQUEST / EXTERNAL_API / BUSINESS',
+  `method` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '方法名',
+  `uri` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '请求路径',
+  `http_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT 'HTTP 方法',
+  `duration` bigint NOT NULL DEFAULT 0 COMMENT '响应耗时（毫秒）',
+  `error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '错误信息',
+  `stack_trace` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '堆栈信息',
+  `ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '请求 IP',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_level`(`level` ASC) USING BTREE,
+  INDEX `idx_type`(`type` ASC) USING BTREE,
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '监控日志表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for monitor_alert_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `monitor_alert_rule`;
+CREATE TABLE `monitor_alert_rule`  (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '规则id',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '规则名称',
+  `log_level` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'ERROR' COMMENT '监控的日志级别',
+  `time_window` int NOT NULL DEFAULT 1 COMMENT '时间窗口（分钟）',
+  `threshold` int NOT NULL DEFAULT 5 COMMENT '告警阈值',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0：禁用 1：启用',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后一次更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '告警规则表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for monitor_alert_record
+-- ----------------------------
+DROP TABLE IF EXISTS `monitor_alert_record`;
+CREATE TABLE `monitor_alert_record`  (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '告警记录id',
+  `rule_id` bigint UNSIGNED NOT NULL COMMENT '关联规则id',
+  `log_level` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '触发时的日志级别',
+  `trigger_count` int NOT NULL DEFAULT 0 COMMENT '触发时的日志数量',
+  `threshold` int NOT NULL DEFAULT 0 COMMENT '触发时的阈值',
+  `notify_status` tinyint NOT NULL DEFAULT 0 COMMENT '通知状态：0：未通知 1：已通知',
+  `error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '最近一条错误消息',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_rule_id`(`rule_id` ASC) USING BTREE,
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '告警触发记录表' ROW_FORMAT = DYNAMIC;
+
 SET FOREIGN_KEY_CHECKS = 1;
