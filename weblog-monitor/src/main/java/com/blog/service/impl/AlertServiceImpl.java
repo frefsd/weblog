@@ -61,12 +61,12 @@ public class AlertServiceImpl extends ServiceImpl<AlertRuleMapper, AlertRule> im
     }
 
     @Override
-    public void evaluateAndNotify(AlertRule rule, String logLevel) {
+    public void evaluateAndNotify(AlertRule rule) {
         LocalDateTime since = LocalDateTime.now().minusMinutes(rule.getTimeWindow());
 
         Long count = monitorLogMapper.selectCount(
                 new LambdaQueryWrapper<com.blog.entity.LogRecord>()
-                        .eq(com.blog.entity.LogRecord::getLevel, logLevel)
+                        .eq(com.blog.entity.LogRecord::getLevel, rule.getLogLevel())
                         .ge(com.blog.entity.LogRecord::getCreateTime, since)
         );
 
@@ -89,7 +89,7 @@ public class AlertServiceImpl extends ServiceImpl<AlertRuleMapper, AlertRule> im
         // 获取最近一条错误消息
         com.blog.entity.LogRecord latestError = monitorLogMapper.selectOne(
                 new LambdaQueryWrapper<com.blog.entity.LogRecord>()
-                        .eq(com.blog.entity.LogRecord::getLevel, logLevel)
+                        .eq(com.blog.entity.LogRecord::getLevel, rule.getLogLevel())
                         .orderByDesc(com.blog.entity.LogRecord::getCreateTime)
                         .last("LIMIT 1")
         );
@@ -97,13 +97,13 @@ public class AlertServiceImpl extends ServiceImpl<AlertRuleMapper, AlertRule> im
 
         // 发送邮件通知
         boolean notified = mailNotifier.sendAlert(
-                rule.getName(), logLevel, count.intValue(), rule.getThreshold(), errorMsg
+                rule.getName(), rule.getLogLevel(), count.intValue(), rule.getThreshold(), errorMsg
         );
 
         // 记录告警记录
         AlertRecord record = new AlertRecord();
         record.setRuleId(rule.getId());
-        record.setLogLevel(logLevel);
+        record.setLogLevel(rule.getLogLevel());
         record.setTriggerCount(count.intValue());
         record.setThreshold(rule.getThreshold());
         record.setNotifyStatus(notified ? 1 : 0);

@@ -9,7 +9,24 @@
         <el-menu :collapse="isCollapse" class="border-0 admin-el-menu" :default-active="defaultActive"
             :collapse-transition="false" unique-opened @select="handleSelect">
             <template v-for="(item, index) in menus" :index="index">
-                <el-menu-item :index="item.path" class="admin-el-menu-item">
+                <!-- 有子菜单 -->
+                <el-sub-menu v-if="item.child && item.child.length > 0" :index="index.toString()" class="admin-el-sub-menu">
+                    <template #title>
+                        <el-icon>
+                            <component :is="item.icon"></component>
+                        </el-icon>
+                        <span>{{ item.name }}</span>
+                    </template>
+                    <el-menu-item v-for="(child, childIndex) in item.child" :key="childIndex" :index="child.path"
+                        class="admin-el-menu-item">
+                        <el-icon>
+                            <component :is="child.icon"></component>
+                        </el-icon>
+                        <span>{{ child.name }}</span>
+                    </el-menu-item>
+                </el-sub-menu>
+                <!-- 无子菜单 -->
+                <el-menu-item v-else :index="item.path" class="admin-el-menu-item">
                     <el-icon>
                         <component :is="item.icon"></component>
                     </el-icon>
@@ -64,6 +81,28 @@ const menus = [{
     'icon': 'Setting',
     'path': '/admin/blog/setting',
     'child': []
+},
+{
+    'name': '监控中心',
+    'icon': 'Monitor',
+    'path': '/admin/monitor/log',
+    'child': [
+        {
+            'name': '实时日志',
+            'icon': 'Tickets',
+            'path': '/admin/monitor/log',
+        },
+        {
+            'name': '告警规则',
+            'icon': 'Bell',
+            'path': '/admin/monitor/rule',
+        },
+        {
+            'name': '告警记录',
+            'icon': 'Clock',
+            'path': '/admin/monitor/alert',
+        }
+    ]
 }
 ]
 
@@ -112,6 +151,28 @@ const handleSelect = (e) => {
 
 .el-menu-item:hover {
     background-color: #ffffff10;
+}
+
+.admin-el-sub-menu .el-sub-menu__title {
+    color: #c0c4cc !important;
+    background-color: #001428 !important;
+}
+
+.admin-el-sub-menu .el-sub-menu__title:hover {
+    background-color: #ffffff10 !important;
+}
+
+.admin-el-sub-menu .el-menu {
+    background-color: #001428 !important;
+}
+
+.admin-el-sub-menu .el-menu .el-menu-item {
+    background-color: #001428 !important;
+    color: #c0c4cc !important;
+}
+
+.admin-el-sub-menu .el-menu .el-menu-item:hover {
+    background-color: #ffffff10 !important;
 }
 
 .meun::-webkit-scrollbar {

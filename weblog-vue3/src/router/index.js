@@ -8,6 +8,9 @@ import AdminArticleList from '@/pages/admin/article-list.vue'
 import AdminCategoryList from '@/pages/admin/category-list.vue'
 import AdminTagList from '@/pages/admin/tag-list.vue'
 import AdminBlogSetting from '@/pages/admin/blog-setting.vue'
+import AdminMonitorLog from '@/pages/admin/monitor-log.vue'
+import AdminMonitorRule from '@/pages/admin/monitor-rule.vue'
+import AdminMonitorAlert from '@/pages/admin/monitor-alert.vue'
 import Index from '@/pages/frontend/index.vue'
 import ArticleDetail from '@/pages/frontend/article-detail.vue'
 import CategoryList from '@/pages/frontend/category-list.vue'
@@ -52,6 +55,24 @@ const routes = [
             component: AdminBlogSetting,
             meta: {
                 title: '博客设置'
+            }
+        }, {
+            path: '/admin/monitor/log',
+            component: AdminMonitorLog,
+            meta: {
+                title: '实时日志'
+            }
+        }, {
+            path: '/admin/monitor/rule',
+            component: AdminMonitorRule,
+            meta: {
+                title: '告警规则'
+            }
+        }, {
+            path: '/admin/monitor/alert',
+            component: AdminMonitorAlert,
+            meta: {
+                title: '告警记录'
             }
         }]
 

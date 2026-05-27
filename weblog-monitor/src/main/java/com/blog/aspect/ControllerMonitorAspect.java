@@ -50,6 +50,7 @@ public class ControllerMonitorAspect {
             if (duration > 3000) {
                 record.setLevel("WARN");
                 record.setErrorMessage("响应超时，耗时: " + duration + "ms");
+                record.setIp(getClientIp());
                 eventPublisher.publishEvent(new LogEvent(this, record));
             }
 

@@ -28,6 +28,11 @@ public class MonitorLogServiceImpl extends ServiceImpl<MonitorLogMapper, LogReco
     }
 
     @Override
+    public void clearAll() {
+        monitorLogMapper.delete(new LambdaQueryWrapper<>());
+    }
+
+    @Override
     public Page<LogRecord> page(LogSearchDTO dto) {
         Page<LogRecord> page = new Page<>(dto.getCurrent(), dto.getSize());
         LambdaQueryWrapper<LogRecord> wrapper = new LambdaQueryWrapper<>();

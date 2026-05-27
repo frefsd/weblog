@@ -180,7 +180,7 @@ class WeBlogServerApplicationTests {
         rule.setThreshold(5);
         when(monitorLogMapper.selectCount(any(Wrapper.class))).thenReturn(3L);
 
-        alertService.evaluateAndNotify(rule, "ERROR");
+        alertService.evaluateAndNotify(rule);
 
         verify(mailNotifier, never()).sendAlert(anyString(), anyString(), anyInt(), anyInt(), anyString());
     }
@@ -201,7 +201,7 @@ class WeBlogServerApplicationTests {
         when(monitorLogMapper.selectOne(any(Wrapper.class))).thenReturn(latest);
         when(mailNotifier.sendAlert(anyString(), anyString(), anyInt(), anyInt(), anyString())).thenReturn(true);
 
-        alertService.evaluateAndNotify(rule, "ERROR");
+        alertService.evaluateAndNotify(rule);
 
         verify(mailNotifier, times(1)).sendAlert(anyString(), anyString(), anyInt(), anyInt(), anyString());
         verify(alertRecordMapper, times(1)).insert(any(AlertRecord.class));
@@ -219,7 +219,7 @@ class WeBlogServerApplicationTests {
         when(monitorLogMapper.selectCount(any(Wrapper.class))).thenReturn(8L);
         when(alertRecordMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
 
-        alertService.evaluateAndNotify(rule, "ERROR");
+        alertService.evaluateAndNotify(rule);
 
         verify(mailNotifier, never()).sendAlert(anyString(), anyString(), anyInt(), anyInt(), anyString());
     }
