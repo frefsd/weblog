@@ -10,4 +10,5 @@ import com.blog.entity.LogRecord;
  */
 public interface MonitorLogService extends IService<LogRecord> {
     Page<LogRecord> page(LogSearchDTO dto);
+    void clearAll();
 }

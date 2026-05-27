@@ -1,6 +1,7 @@
 package com.blog.config;
 
 import com.blog.filter.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -64,6 +65,20 @@ public class SecurityConfig {
                         // 除了上面放行的，其他所有的请求都需要认证
                         .anyRequest().authenticated()
 
+                )
+
+                // 异常处理：401 未认证 / 403 权限不足，统一返回 JSON（前端据此区分跳登录还是弹提示）
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("{\"success\":false,\"message\":\"请先登录\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("{\"success\":false,\"message\":\"权限不足：您没有执行该操作的权限\"}");
+                        })
                 )
 
                 // 添加JWT过滤器

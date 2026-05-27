@@ -15,6 +15,6 @@ public interface AlertService extends IService<AlertRule> {
     void saveRule(AlertRule rule);
     void deleteRule(Long id);
     List<AlertRule> listRules();
-    void evaluateAndNotify(AlertRule rule, String logLevel);
+    void evaluateAndNotify(AlertRule rule);
     Page<AlertRecord> pageAlertRecord(Integer current, Integer size);
 }
