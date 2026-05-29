@@ -603,37 +603,83 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     /**
-     * 获取归档列表
+     * 获取归档列表（年→月二级分组，含分类名称）
      */
     @Override
-    public List<ArchiveItemVO> getArchiveList() {
+    public List<ArchiveYearVO> getArchiveList() {
         // 查询所有文章（按创建时间降序）
         List<Article> articleList = this.list(new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
                 .orderByDesc(Article::getCreateTime));
 
-        // 按年月分组
-        List<ArchiveItemVO> result = new java.util.ArrayList<>();
-        String currentMonth = null;
-        ArchiveItemVO currentItem = null;
+        // 预加载所有文章的分类关联（避免 N+1）
+        Set<Long> articleIds = articleList.stream().map(Article::getId).collect(Collectors.toSet());
+        List<ArticleCategoryRel> allRels = articleIds.isEmpty() ? Collections.emptyList() :
+                articleCategoryRelMapper.selectList(new LambdaQueryWrapper<ArticleCategoryRel>()
+                        .in(ArticleCategoryRel::getArticleId, articleIds));
+        Set<Long> categoryIds = allRels.stream().map(ArticleCategoryRel::getCategoryId).collect(Collectors.toSet());
+        List<Category> categories = categoryIds.isEmpty() ? Collections.emptyList() :
+                categoryMapper.selectList(new LambdaQueryWrapper<Category>()
+                        .in(Category::getId, categoryIds));
+
+        // 构建 articleId → categoryName 映射
+        java.util.Map<Long, String> categoryNameMap = new java.util.HashMap<>();
+        for (ArticleCategoryRel rel : allRels) {
+            categories.stream()
+                    .filter(c -> c.getId().equals(rel.getCategoryId()))
+                    .findFirst()
+                    .ifPresent(c -> categoryNameMap.put(rel.getArticleId(), c.getName()));
+        }
+
+        // 年→月二级分组
+        java.util.Map<String, ArchiveYearVO> yearMap = new java.util.LinkedHashMap<>();
+        DateTimeFormatter yearFmt = DateTimeFormatter.ofPattern("yyyy");
+        DateTimeFormatter monthFmt = DateTimeFormatter.ofPattern("MM月");
+        DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("MM-dd");
 
         for (Article article : articleList) {
-            String month = article.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            if (!month.equals(currentMonth)) {
-                currentItem = new ArchiveItemVO();
-                currentItem.setMonth(month);
-                currentItem.setArticles(new java.util.ArrayList<>());
-                result.add(currentItem);
-                currentMonth = month;
+            String year = article.getCreateTime().format(yearFmt);
+            String month = article.getCreateTime().format(monthFmt);
+
+            // 获取或创建年份
+            ArchiveYearVO yearVO = yearMap.computeIfAbsent(year, k -> {
+                ArchiveYearVO vo = new ArchiveYearVO();
+                vo.setYear(k);
+                vo.setArticleCount(0);
+                vo.setMonths(new java.util.ArrayList<>());
+                return vo;
+            });
+
+            // 获取或创建月份
+            ArchiveMonthVO monthVO = null;
+            for (ArchiveMonthVO m : yearVO.getMonths()) {
+                if (m.getMonth().equals(month)) {
+                    monthVO = m;
+                    break;
+                }
             }
+            if (monthVO == null) {
+                monthVO = new ArchiveMonthVO();
+                monthVO.setMonth(month);
+                monthVO.setArticleCount(0);
+                monthVO.setArticles(new java.util.ArrayList<>());
+                yearVO.getMonths().add(monthVO);
+            }
+
+            // 构建文章简要信息
             ArticleBriefVO brief = new ArticleBriefVO();
             brief.setId(article.getId());
             brief.setTitle(article.getTitle());
             brief.setTitleImage(article.getTitleImage());
-            currentItem.getArticles().add(brief);
+            brief.setCreateTime(article.getCreateTime().format(dayFmt));
+            brief.setCategoryName(categoryNameMap.getOrDefault(article.getId(), null));
+
+            monthVO.getArticles().add(brief);
+            monthVO.setArticleCount(monthVO.getArticleCount() + 1);
+            yearVO.setArticleCount(yearVO.getArticleCount() + 1);
         }
 
-        return result;
+        return new java.util.ArrayList<>(yearMap.values());
     }
 
     /**

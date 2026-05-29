@@ -2,6 +2,7 @@ package com.blog.controller;
 
 
 import com.blog.dto.AlertPageDTO;
+import com.blog.dto.AlertRuleDeleteDTO;
 import com.blog.dto.LogSearchDTO;
 import com.blog.entity.AlertRecord;
 import com.blog.entity.AlertRule;
@@ -17,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -91,14 +91,14 @@ public class MonitorController {
     /**
      * 根据id删除告警规则
      *
-     * @param id
+     * @param dto
      * @return
      */
     @Operation(summary = "删除告警规则")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/rule/delete")
-    public Result<Void> ruleDelete(@RequestParam("id") Long id) {
-        alertService.deleteRule(id);
+    public Result<Void> ruleDelete(@Valid @RequestBody AlertRuleDeleteDTO dto) {
+        alertService.deleteRule(dto.getId());
         return Result.ok();
     }
 
