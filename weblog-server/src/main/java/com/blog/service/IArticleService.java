@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.blog.dto.*;
 import com.blog.entity.Article;
-import com.blog.vo.ArchiveItemVO;
+import com.blog.vo.ArchiveYearVO;
 import com.blog.vo.ArticleDetailVO;
 import com.blog.vo.ArticleFrontendDetailVO;
 import com.blog.vo.ArticleIndexVO;
@@ -73,9 +73,9 @@ public interface IArticleService extends IService<Article> {
     IPage<ArticleIndexVO> getArticlesByTagId(Long tagId, ArticlePageDTO query);
 
     /**
-     * 获取归档列表
+     * 获取归档列表（年→月二级分组）
      */
-    List<ArchiveItemVO> getArchiveList();
+    List<ArchiveYearVO> getArchiveList();
 
     /**
      * 搜索文章（前台）

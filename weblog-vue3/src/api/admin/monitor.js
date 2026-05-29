@@ -17,7 +17,7 @@ export function saveRule(data) {
 }
 
 export function deleteRule(id) {
-    return axios.post(`/monitor/rule/delete?id=${id}`)
+    return axios.post("/monitor/rule/delete", { id })
 }
 
 export function getAlertPageList(data) {
