@@ -236,4 +236,19 @@ CREATE TABLE `monitor_alert_record`  (
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '告警触发记录表' ROW_FORMAT = DYNAMIC;
 
+-- ----------------------------
+-- Table structure for ai_chat_memory
+-- ----------------------------
+DROP TABLE IF EXISTS `ai_chat_memory`;
+CREATE TABLE `ai_chat_memory` (
+  `id`           bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '记录id',
+  `session_id`   varchar(64)     NOT NULL                COMMENT '会话ID（前端生成UUID）',
+  `user_message` text            NOT NULL                COMMENT '用户问题',
+  `ai_message`   text            NOT NULL                COMMENT 'AI回答',
+  `sources`      text                                    COMMENT '引用来源（JSON数组）',
+  `create_time`  datetime        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_session_id`(`session_id` ASC) USING BTREE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC COMMENT = 'AI 聊天记录表';
+
 SET FOREIGN_KEY_CHECKS = 1;

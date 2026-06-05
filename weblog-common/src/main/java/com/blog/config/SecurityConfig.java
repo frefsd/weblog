@@ -57,7 +57,8 @@ public class SecurityConfig {
                                 "/tag/**",                     // 前台标签接口
                                 "/archive/**",                 // 前台归档接口
                                 "/blog/**",                    // 博客设置接口
-                                "/game/**"                     // 前台游戏接口
+                                "/game/**",                    // 前台游戏接口
+                                "/ai/**"                       // AI 智能问答（流式）
                         ).permitAll()
                         // 明确放行 GET 和 POST 的 /login 请求,做兜底
                         .requestMatchers(HttpMethod.GET, "/login").permitAll()
