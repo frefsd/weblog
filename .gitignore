@@ -39,3 +39,9 @@ logs/
 *.log
 *.log.*
 *.gz
+
+# AI 向量索引（运行时生成）
+data/
+
+# Claude Code
+.claude/

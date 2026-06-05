@@ -19,6 +19,7 @@ import CategoryArticleList from '@/pages/frontend/category-article-list.vue'
 import TagArticleList from '@/pages/frontend/tag-article-list.vue'
 import ArchiveList from '@/pages/frontend/archive-list.vue'
 import SearchResults from '@/pages/frontend/search-results.vue'
+import AiChat from '@/pages/frontend/ai-chat.vue'
 
 const routes = [
     {
@@ -142,6 +143,13 @@ const routes = [
         component: SearchResults,
         meta: {
             title: '搜索结果'
+        },
+    },
+    {
+        path: '/ai',
+        component: AiChat,
+        meta: {
+            title: '小智'
         },
     },
     // 将匹配所有内容并将其放在 `$route.params.pathMatch` 下

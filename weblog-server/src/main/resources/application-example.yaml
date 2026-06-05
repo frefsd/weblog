@@ -64,3 +64,19 @@ aliyun:
 springdoc:
   swagger-ui:
     enabled: true
+
+# AI 智能问答配置
+ai:
+  zhipu:
+    api-key: YOUR_ZHIPU_API_KEY
+    model-name: glm-4-flash
+    embedding-model: embedding-3
+  chat-memory:
+    max-rounds: 5
+  rag:
+    top-k: 3
+  api:
+    timeout-seconds: 30
+  embedding:
+    chunk-size: 500
+    chunk-overlap: 50

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.dto.*;
 import com.blog.entity.*;
+import com.blog.ai.event.ArticleChangeEvent;
 import com.blog.exception.BusinessException;
 import com.blog.mapper.*;
 import com.blog.service.IArticleService;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +55,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final CategoryMapper categoryMapper;
     private final IVisitorRecordService visitorRecordService;
     private final IStatisticsArticlePvService statisticsArticlePvService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 自注入，用于 Spring Cache AOP 代理调用
     @Autowired
@@ -237,6 +240,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             rel.setTagId(tagId);
             articleTagRelMapper.insert(rel);
         }
+
+        eventPublisher.publishEvent(new ArticleChangeEvent(articleId, dto.getTitle(), dto.getContent(), ArticleChangeEvent.ChangeType.CREATED));
     }
 
     /**
@@ -302,6 +307,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             rel.setTagId(tagId);
             articleTagRelMapper.insert(rel);
         }
+
+        eventPublisher.publishEvent(new ArticleChangeEvent(dto.getId(), dto.getTitle(), dto.getContent(), ArticleChangeEvent.ChangeType.UPDATED));
     }
 
     /**
@@ -323,6 +330,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         update.setIsDeleted(1);
         update.setUpdateTime(LocalDateTime.now());
         articleMapper.updateById(update);
+
+        eventPublisher.publishEvent(new ArticleChangeEvent(articleId, exist.getTitle(), null, ArticleChangeEvent.ChangeType.DELETED));
     }
 
     /**
