@@ -22,6 +22,7 @@
     "gasp": "^0.0.2",
     "gsap": "^3.11.5",
     "highlight.js": "^11.8.0",
+    "marked": "^18.0.5",
     "mavon-editor": "^3.0.1",
     "md-editor-v3": "^3.0.1",
     "moment": "^2.29.4",

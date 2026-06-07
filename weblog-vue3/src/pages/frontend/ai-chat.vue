@@ -41,7 +41,12 @@
                     <p v-if="msg.isError" class="text-sm leading-relaxed text-red-500 dark:text-red-400">
                         {{ msg.content }}
                     </p>
-                    <!-- 正常文本（preserve 换行） -->
+                    <!-- AI 消息：流式过程中直接 innerHTML 渲染 Markdown，完成后用 Vue v-html -->
+                    <div v-else-if="!msg.isUser" class="text-sm leading-relaxed">
+                        <div v-if="msg.isStreaming" :ref="(el) => setStreamingRef(el, msg)" class="markdown-body"></div>
+                        <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                    </div>
+                    <!-- 用户消息：纯文本 -->
                     <p v-else class="text-sm leading-relaxed whitespace-pre-wrap">{{ msg.content }}</p>
 
                     <!-- 流式输出光标：动态跳动黑点 -->
@@ -111,8 +116,15 @@ import { ref, nextTick, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
-import { sendChatMessageStream } from '@/api/frontend/chat'
+import { sendChatMessageStreamText } from '@/api/frontend/chat'
 import axios from '@/axios'
+import { marked } from 'marked'
+
+// 配置 marked Markdown 渲染器
+marked.setOptions({
+    breaks: true,   // 换行转为 <br>
+    gfm: true       // GitHub 风格 Markdown
+})
 
 const router = useRouter()
 
@@ -125,7 +137,7 @@ const suggestedQuestions = [
 ]
 
 // ---- 数据 ----
-const messages = ref([])           // { isUser, isStreaming, content, sources, isError }
+const messages = ref([])        
 const inputText = ref('')
 const isStreaming = ref(false)
 const textareaRef = ref(null)
@@ -226,7 +238,12 @@ function handleSuggested(q) {
     sendMessage()
 }
 
-// ---- 跳转到文章 ----
+// ---- 流式显示的 DOM ref：直接存到消息对象上 ----
+// 注意：不能用 Map<msg, el> 因为模板中的 msg 是 Vue 响应式 Proxy，
+// 而流式循环里的 aiMsg 是原始对象，Proxy !== 原始对象，Map 查不到。
+function setStreamingRef(el, msg) {
+    msg._el = el || null
+}
 function goArticle(articleId) {
     if (articleId) {
         router.push({ path: '/article/detail', query: { articleId } })
@@ -241,6 +258,12 @@ function scrollToBottom() {
             el.scrollTop = el.scrollHeight
         }
     })
+}
+
+// ---- Markdown 渲染 ----
+function renderMarkdown(text) {
+    if (!text) return ''
+    return marked.parse(text)
 }
 
 // ---- 发送消息（SSE 流式） ----
@@ -264,73 +287,73 @@ async function sendMessage() {
     const sessionId = getSessionId()
 
     try {
-        const response = await sendChatMessageStream(sessionId, text, abortController.signal)
+        const response = await sendChatMessageStreamText(sessionId, text, abortController.signal)
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`)
         }
 
         const reader = response.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        let currentEvent = ''
+        const decoder = new TextDecoder('utf-8')
+        let fullText = ''
+        let metaResolved = false
 
         while (true) {
             const { done, value } = await reader.read()
             if (done) break
 
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split('\n')
-            buffer = lines.pop() // 保留不完整行
+            fullText += decoder.decode(value, { stream: true })
 
-            for (const line of lines) {
-                // 通用解析：兼容 "field:value" 和 "field: value" 两种格式
-                // Spring SseEmitter 默认不带空格（event:chunk），标准 SSE 规范带空格（event: chunk）
-                const colonIdx = line.indexOf(':')
-                if (colonIdx <= 0) continue
-
-                const field = line.substring(0, colonIdx)
-                const value = line.substring(colonIdx + 1).trim()
-
-                if (field === 'event') {
-                    currentEvent = value
-                } else if (field === 'data') {
-                    if (currentEvent === 'chunk') {
-                        try {
-                            const data = JSON.parse(value)
-                            if (data.content) {
-                                aiMsg.content += data.content
-                                scrollToBottom()
-                                // 三步强制渲染：Vue 更新 DOM → 浏览器渲染到屏幕
-                                await nextTick()
-                                await new Promise(r => requestAnimationFrame(r))
-                            }
-                        } catch (e) {
-                            console.error('SSE chunk 解析失败:', value, e)
-                        }
-                    } else if (currentEvent === 'done') {
-                        aiMsg.isStreaming = false
-                        try {
-                            const data = JSON.parse(value)
-                            aiMsg.sources = data.sources || []
-                            // 后端可能返回新的 sessionId（旧会话过期时）
-                            if (data.sessionId) {
-                                setSessionId(data.sessionId)
-                            }
-                        } catch (e) {
-                            console.error('SSE done 解析失败:', value, e)
-                        }
-                        // 流式完成，主动保底保存完整内容到 localStorage
-                        saveMessages()
+            // 检测是否包含元数据分隔符
+            const metaIdx = fullText.lastIndexOf('___META___')
+            if (metaIdx >= 0 && !metaResolved) {
+                metaResolved = true
+                const cleanEnd = fullText.indexOf('___META___')
+                const textPart = fullText.substring(0, cleanEnd)
+                // 逐字显示：直接 innerHTML 渲染 Markdown
+                const el2 = aiMsg._el
+                if (el2) {
+                    for (let i = aiMsg.content.length; i < textPart.length; i++) {
+                        el2.innerHTML = renderMarkdown(textPart.substring(0, i + 1))
+                        await new Promise(r => setTimeout(r, 30))
                     }
                 }
+                // 同步到 Vue reactive 状态
+                aiMsg.content = textPart
+
+                // 解析元数据
+                const metaStr = fullText.substring(metaIdx + 11).trim()
+                try {
+                    const meta = JSON.parse(metaStr)
+                    aiMsg.sources = meta.sources || []
+                    if (meta.sessionId) {
+                        setSessionId(meta.sessionId)
+                    }
+                } catch (e) {
+                    console.error('元数据解析失败:', metaStr, e)
+                }
+            } else if (!metaResolved) {
+                // 逐字显示：直接 innerHTML 渲染 Markdown
+                const el2 = aiMsg._el
+                if (el2) {
+                    for (let i = aiMsg.content.length; i < fullText.length; i++) {
+                        el2.innerHTML = renderMarkdown(fullText.substring(0, i + 1))
+                        await new Promise(r => setTimeout(r, 30))
+                    }
+                }
+                // 同步到 Vue reactive 状态
+                aiMsg.content = fullText
             }
         }
 
-        // 流结束但没收到 done 事件时，手动收尾
-        if (aiMsg.isStreaming) {
-            aiMsg.isStreaming = false
+        // 流结束
+        if (!metaResolved) {
+            aiMsg.content = fullText
         }
+        // 同步完成后标记结束，触发 Vue 切换到 markdown 视图
+        aiMsg.isStreaming = false
+        // 保存到 localStorage
+        saveMessages()
     } catch (err) {
         // 用户主动中断
         if (err.name === 'AbortError') {
@@ -405,5 +428,110 @@ function stopStreaming() {
     .bubble-max {
         max-width: 75%;
     }
+}
+</style>
+
+<!-- Markdown 正文样式（非 scoped，因为 v-html 插入的内容需要全局样式） -->
+<style>
+.markdown-body {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: inherit;
+    word-break: break-word;
+}
+.markdown-body p {
+    margin: 0 0 0.5em 0;
+}
+.markdown-body p:last-child {
+    margin-bottom: 0;
+}
+.markdown-body strong {
+    font-weight: 700;
+    color: inherit;
+}
+.markdown-body em {
+    font-style: italic;
+}
+.markdown-body ol {
+    list-style: decimal;
+    padding-left: 1.5em;
+    margin: 0.25em 0 0.5em 0;
+}
+.markdown-body ul {
+    list-style: disc;
+    padding-left: 1.5em;
+    margin: 0.25em 0 0.5em 0;
+}
+.markdown-body li {
+    margin-bottom: 0.25em;
+}
+.markdown-body li:last-child {
+    margin-bottom: 0;
+}
+.markdown-body code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.8em;
+    padding: 0.15em 0.35em;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    color: #e11d48;
+}
+.dark .markdown-body code {
+    background-color: #374151;
+    color: #fca5a5;
+}
+.markdown-body pre {
+    margin: 0.5em 0;
+    padding: 0.75em 1em;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.8em;
+    line-height: 1.5;
+}
+.dark .markdown-body pre {
+    background-color: #1f2937;
+}
+.markdown-body pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+}
+.markdown-body blockquote {
+    border-left: 3px solid #d1d5db;
+    padding-left: 0.75em;
+    margin: 0.5em 0;
+    color: #6b7280;
+}
+.dark .markdown-body blockquote {
+    border-left-color: #4b5563;
+    color: #9ca3af;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+    font-weight: 700;
+    margin: 0.75em 0 0.25em 0;
+    line-height: 1.4;
+}
+.markdown-body h1 { font-size: 1.2em; }
+.markdown-body h2 { font-size: 1.1em; }
+.markdown-body h3 { font-size: 1em; }
+.markdown-body a {
+    color: #2563eb;
+    text-decoration: underline;
+}
+.dark .markdown-body a {
+    color: #60a5fa;
+}
+.markdown-body hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 0.75em 0;
+}
+.dark .markdown-body hr {
+    border-top-color: #374151;
 }
 </style>
