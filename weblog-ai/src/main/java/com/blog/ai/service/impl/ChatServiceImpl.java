@@ -16,17 +16,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 
 @Slf4j
 @Service
@@ -110,70 +113,58 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public SseEmitter chatStream(String sessionId, String question) {
+    public StreamingResponseBody chatStreamText(String sessionId, String question) {
         String sid = resolveSessionId(sessionId);
-        SseEmitter emitter = new SseEmitter(
-                Math.max(aiProperties.getApi().getTimeoutSeconds() * 1000L, 60000L));
-
-        // RAG 检索只执行一次，结果传给 prompt 和回调
         List<RagService.SearchResult> searchResults = ragService.search(question, aiProperties.getRag().getTopK());
 
-        CompletableFuture.runAsync(() -> {
-            AtomicBoolean disconnected = new AtomicBoolean(false);
-            try {
-                String prompt = buildPrompt(sid, question, searchResults);
-                StringBuilder fullAnswer = new StringBuilder();
-                callChatApiStream(prompt, new StreamCallback() {
-                    @Override
-                    public void onToken(String token) {
-                        if (disconnected.get()) return;
-                        try {
-                            fullAnswer.append(token);
-                            emitter.send(SseEmitter.event()
-                                    .name("chunk")
-                                    .data(Map.of("content", token)));
-                            // 微小延迟，让前端有足够时间渲染每个 token
-                            try { Thread.sleep(30); } catch (InterruptedException ignored) {}
-                        } catch (Exception e) {
-                            disconnected.set(true);
-                        }
+        return outputStream -> {
+            String prompt = buildPrompt(sid, question, searchResults);
+            StringBuilder fullAnswer = new StringBuilder();
+            log.info("纯文本流式开始，sessionId={}", sid);
+
+            callChatApiStream(prompt, new StreamCallback() {
+                @Override
+                public void onToken(String token) {
+                    fullAnswer.append(token);
+                    try {
+                        outputStream.write(token.getBytes(StandardCharsets.UTF_8));
+                        outputStream.flush();
+                        // 每输出一个 token 等待 30ms，确保浏览器逐字渲染
+                        Thread.sleep(30);
+                    } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    } catch (IOException e) {
+                        // 客户端断开连接，停止流式
+                        throw new RuntimeException("Client disconnected", e);
                     }
+                }
 
-                    @Override
-                    public void onComplete() {
-                        if (disconnected.get()) return;
-                        try {
-                            List<ChatSourceVO> sources = buildSources(searchResults);
-                            String sourcesJson = objectMapper.writeValueAsString(sources);
-                            chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);
+                @Override
+                public void onComplete() {
+                    try {
+                        List<ChatSourceVO> sources = buildSources(searchResults);
+                        String sourcesJson = objectMapper.writeValueAsString(sources);
+                        chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);
+                        log.info("纯文本流式完成，共 {} 字符", fullAnswer.length());
 
-                            Map<String, Object> doneData = new java.util.HashMap<>();
-                            doneData.put("sources", sources);
-                            doneData.put("sessionId", sid);
-                            emitter.send(SseEmitter.event().name("done").data(doneData));
-                            emitter.complete();
-                        } catch (Exception e) {
-                            disconnected.set(true);
-                            try { emitter.complete(); } catch (Exception ignored) {}
-                        }
+                        // 在文本末尾附上元数据（sessionId + sources）
+                        Map<String, Object> meta = new HashMap<>();
+                        meta.put("sessionId", sid);
+                        meta.put("sources", sources);
+                        String metaJson = "\n___META___\n" + objectMapper.writeValueAsString(meta);
+                        outputStream.write(metaJson.getBytes(StandardCharsets.UTF_8));
+                        outputStream.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to write meta", e);
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable error) {
-                        if (disconnected.get()) return;
-                        try {
-                            emitter.completeWithError(error);
-                        } catch (Exception ignored) {}
-                    }
-                });
-            } catch (Exception e) {
-                try {
-                    emitter.completeWithError(e);
-                } catch (Exception ignored) {}
-            }
-        });
-
-        return emitter;
+                @Override
+                public void onError(Throwable error) {
+                    log.error("流式处理出错", error);
+                }
+            });
+        };
     }
 
     /**

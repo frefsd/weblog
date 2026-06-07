@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,10 +22,10 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    @Operation(summary = "SSE 流式对话")
-    @PostMapping("/chat/stream")
-    public SseEmitter chatStream(@Valid @RequestBody ChatRequestDTO request) {
-        return chatService.chatStream(request.getSessionId(), request.getQuestion());
+    @Operation(summary = "流式对话（纯文本，无需 SSE 解析）")
+    @PostMapping("/chat/stream/text")
+    public StreamingResponseBody chatStreamText(@Valid @RequestBody ChatRequestDTO request) {
+        return chatService.chatStreamText(request.getSessionId(), request.getQuestion());
     }
 
     @Operation(summary = "校验会话是否有效（未过期）")
