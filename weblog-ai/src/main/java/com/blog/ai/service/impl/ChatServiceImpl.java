@@ -92,16 +92,11 @@ public class ChatServiceImpl implements ChatService {
 
     /**
      * 解析会话 ID：如果前端已传入则沿用，否则创建新会话。
-     * 如果会话已过期（24 小时不活跃），则生成新会话 ID 让前端刷新。
+     * 不再擅自替换 sessionId，保持前后端一致，
+     * 避免元数据中 sessionId 变化导致前端清空消息。
      */
     private String resolveSessionId(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
-            return UUID.randomUUID().toString();
-        }
-        // 检查会话是否过期：调用 getRecentChats（含过期校验），
-        // 如果返回空列表则说明会话不存在或已过期，生成新 sessionId
-        List<AiChatMemory> history = chatMemoryService.getRecentChats(sessionId, 1);
-        if (history.isEmpty()) {
             return UUID.randomUUID().toString();
         }
         return sessionId;
@@ -110,6 +105,33 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public boolean validateSession(String sessionId) {
         return chatMemoryService.validateSession(sessionId);
+    }
+
+    @Override
+    public List<Map<String, Object>> getChatHistory(String sessionId) {
+        List<AiChatMemory> records = chatMemoryService.getChatHistory(sessionId);
+        List<Map<String, Object>> messages = new ArrayList<>();
+        for (AiChatMemory record : records) {
+            Map<String, Object> userMsg = new HashMap<>();
+            userMsg.put("isUser", true);
+            userMsg.put("content", record.getUserMessage());
+            messages.add(userMsg);
+
+            Map<String, Object> aiMsg = new HashMap<>();
+            aiMsg.put("isUser", false);
+            aiMsg.put("content", record.getAiMessage());
+            try {
+                if (record.getSources() != null && !record.getSources().isBlank()) {
+                    aiMsg.put("sources", objectMapper.readValue(record.getSources(), List.class));
+                } else {
+                    aiMsg.put("sources", List.of());
+                }
+            } catch (Exception e) {
+                aiMsg.put("sources", List.of());
+            }
+            messages.add(aiMsg);
+        }
+        return messages;
     }
 
     @Override
@@ -129,10 +151,6 @@ public class ChatServiceImpl implements ChatService {
                     try {
                         outputStream.write(token.getBytes(StandardCharsets.UTF_8));
                         outputStream.flush();
-                        // 每输出一个 token 等待 30ms，确保浏览器逐字渲染
-                        Thread.sleep(30);
-                    } catch (InterruptedException ignored) {
-                        Thread.currentThread().interrupt();
                     } catch (IOException e) {
                         // 客户端断开连接，停止流式
                         throw new RuntimeException("Client disconnected", e);
@@ -141,19 +159,24 @@ public class ChatServiceImpl implements ChatService {
 
                 @Override
                 public void onComplete() {
+                    // 先写元数据，再写数据库（保证前端能拿到 sessionId）
+                    Map<String, Object> meta = new HashMap<>();
+                    meta.put("sessionId", sid);
                     try {
                         List<ChatSourceVO> sources = buildSources(searchResults);
-                        String sourcesJson = objectMapper.writeValueAsString(sources);
-                        chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);
-                        log.info("纯文本流式完成，共 {} 字符", fullAnswer.length());
-
-                        // 在文本末尾附上元数据（sessionId + sources）
-                        Map<String, Object> meta = new HashMap<>();
-                        meta.put("sessionId", sid);
                         meta.put("sources", sources);
                         String metaJson = "\n___META___\n" + objectMapper.writeValueAsString(meta);
                         outputStream.write(metaJson.getBytes(StandardCharsets.UTF_8));
                         outputStream.flush();
+                        log.info("纯文本流式完成，共 {} 字符", fullAnswer.length());
+
+                        // 异步保存聊天记录到数据库（即使失败也不影响前端）
+                        try {
+                            String sourcesJson = objectMapper.writeValueAsString(sources);
+                            chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);
+                        } catch (Exception e) {
+                            log.error("保存聊天记录失败(不影响使用): sessionId={}", sid, e);
+                        }
                     } catch (IOException e) {
                         throw new RuntimeException("Failed to write meta", e);
                     }

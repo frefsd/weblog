@@ -14,7 +14,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import FallingPetals from '@/components/FallingPetals.vue'
 
-import zhCn from 'element-plus/lib/locale/lang/zh-cn'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 let locale = zhCn
 
 const route = useRoute()
