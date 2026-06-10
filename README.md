@@ -2,7 +2,7 @@
 
 ## 📖 项目简介
 
-WeBlog是一个基于Spring Boot和Vue 3构建的现代化前后端分离博客系统。系统提供了完整的博客管理功能，包括文章管理、分类标签、用户管理、数据统计等，适合个人博客、技术分享平台等场景使用。
+WeBlog 是一个基于 Spring Boot 3 和 Vue 3 构建的现代化前后端分离博客系统，集成了 **AI 智能问答（RAG + 智谱 GLM）**、**运维监控告警**、**文件上传**、**数据统计**等功能，适合个人博客、技术分享平台等场景使用。
 
 该项目的前端界面设计与交互参考了开源项目 [WeBlog](https://gitee.com/AllenJiang/WeBlog)（在此向原作者表示感谢），但后端核心架构、数据库设计及业务逻辑完全由本人独立开发。
 
@@ -10,368 +10,213 @@ WeBlog是一个基于Spring Boot和Vue 3构建的现代化前后端分离博客�
 
 ##### 访客账号：
 
-用户名：vistor
-
-密码：vistor
+- 用户名：vistor
+- 密码：vistor
 
 ## 🏗️ 系统架构
 
 ### 架构概述
-WeBlog采用现代化的前后端分离架构，后端基于Spring Boot 3.5.9构建，前端使用Vue 3.2.47框架。项目采用多模块Maven管理，实现了清晰的代码分层和模块化设计。
+
+WeBlog 采用现代化的前后端分离架构，后端基于 Spring Boot 3.5.9 构建，前端使用 Vue 3.2.47 框架。项目采用 **6 模块 Maven 管理**，包括 AI 智能问答、监控告警等独立模块。
 
 **架构特点**：
-- **前后端分离**：前端独立部署，通过RESTful API与后端通信
-- **多模块设计**：后端拆分为4个Maven模块，职责清晰
-- **分层架构**：遵循Controller-Service-Mapper三层架构
-- **安全认证**：基于JWT和Spring Security的认证授权机制
-- **响应式前端**：使用Vue 3组合式API和Element Plus组件库
+- **前后端分离**：前端独立部署，通过 RESTful API 与后端通信
+- **多模块设计**：后端拆分为 6 个 Maven 模块，职责清晰
+- **分层架构**：遵循 Controller-Service-Mapper 三层架构
+- **安全认证**：基于 JWT + Redis 白名单 + Spring Security 的认证授权机制
+- **响应式前端**：使用 Vue 3 Composition API + Element Plus + TailwindCSS
+- **AI RAG 问答**：基于向量检索 + 智谱 AI API 的智能问答系统
+- **事件驱动**：AOP 切面采集日志 + ApplicationEventPublisher 解耦模块依赖
+- **流式输出**：Server-Sent Events（SSE）实现 AI 逐 token 输出
 
 ### 架构图
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        前端 (Vue 3)                          │
-│                    weblog-vue3/ 目录                         │
-│  ├── src/                                                   │
-│  │   ├── api/          # API接口定义                        │
-│  │   ├── pages/        # 页面组件                           │
-│  │   ├── components/   # 公共组件                           │
-│  │   └── store/        # Vuex状态管理                       │
-│  └── package.json      # 前端依赖配置                       │
-└────────────────────────────┬────────────────────────────────┘
-                             │ HTTP/RESTful API (端口: 8081)
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       后端 (Spring Boot)                     │
-├──────────────┬──────────────┬──────────────┬──────────────┤
-│ WeBlog-parent │ WeBlog-common │ WeBlog-pojo  │ WeBlog-server │
-│   (父模块)    │  (公共模块)   │ (数据模型)   │  (业务模块)   │
-│   pom.xml    │ 配置/工具/异常 │ DTO/VO/参数  │ 控制器/服务层 │
-└──────────────┴──────────────┴──────────────┴──────────────┘
-                             │
-                             │ JDBC + MyBatis-Plus
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       数据库 (MySQL 8.0)                     │
-│                    11个核心表，支持事务                      │
-│  ├── article        # 文章表                                │
-│  ├── category       # 分类表                                │
-│  ├── tag            # 标签表                                │
-│  └── ...            # 其他表                                │
-└─────────────────────────────────────────────────────────────┘
+│                       前端 (Vue 3)                           │
+│                       weblog-vue3/                           │
+│  ├── api/          # API 接口定义（admin + frontend）       │
+│  ├── pages/        # 页面组件（管理员 + 前台）              │
+│  ├── layouts/      # 布局组件（Header/Footer/AdminLayout）  │
+│  ├── components/   # 公共组件（骨架屏/图表/编辑器）         │
+│  ├── router/       # 17 条路由（9 前台 + 8 管理员 + 404）  │
+│  ├── store/        # Vuex 状态管理                          │
+│  └── composables/  # Token 管理/UI 工具封装                  │
+└────────────────────────┬────────────────────────────────────┘
+                         │ HTTP/RESTful API（端口: 8081）
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      后端 (Spring Boot 3.5.9 + JDK 17)           │
+├────────────────┬────────────────┬────────────────┬──────────────┤
+│  weblog-common │  weblog-pojo   │ weblog-monitor │  weblog-ai   │
+│  (公共模块)     │  (数据模型)     │  (监控告警)     │  (AI 问答)   │
+│  配置/工具/安全 │  DTO/Entity/VO  │  AOP日志/告警   │  RAG/智谱/SSE│
+├────────────────┴────────────────┴────────────────┴──────────────┤
+│                          weblog-server                           │
+│               (启动入口 + Controller + Service + Mapper)          │
+└─────────────────────────────────────────────────────────────────┘
+                         │
+                         │ JDBC + MyBatis-Plus
+                         ▼
+┌────────────────────────────────────────────────────────────┐
+│                    数据库 (MySQL 8.0)                       │
+│                     15 张核心表                             │
+│  ├── article / article_content / article_category_rel ...  │
+│  ├── category / tag / user / user_role / blog_setting ...  │
+│  ├── monitor_log / monitor_alert_rule / monitor_alert_record│
+│  ├── ai_chat_memory / statistics_article_pv / visitor_record│
+│  └── 所有业务表支持逻辑删除（is_deleted）                   │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ### 模块说明
-1. **WeBlog-parent**：父模块，统一管理依赖版本和构建配置，不包含业务代码
-2. **WeBlog-common**：公共模块，包含配置类、工具类、异常处理、JWT工具、OSS操作等通用组件
-3. **WeBlog-pojo**：数据模型模块，包含DTO（数据传输对象）、VO（视图对象）、查询参数等
-4. **WeBlog-server**：业务模块，包含控制器、服务层、数据访问层、实体类等核心业务逻辑
+
+| 模块 | 说明 | 关键功能 |
+|------|------|----------|
+| **weblog-common** | 公共模块 | SecurityConfig（JWT+Spring Security）、CorsConfig、RedisConfig、GlobalExceptionHandler、JwtUtil、AliyunOSSOperator |
+| **weblog-pojo** | 数据模型模块 | 25 个 DTO、15 个 Entity、15 个 VO |
+| **weblog-monitor** | 监控告警模块 | AOP 切面采集 Controller 请求日志、告警规则引擎（定时扫描+阈值触发+邮件通知） |
+| **weblog-ai** | AI 智能问答模块 | RAG（向量检索 + 余弦相似度）、智谱 GLM API、SSE 流式输出、24h 会话过期、事件驱动增量索引 |
+| **weblog-server** | 主启动模块 | 7 个管理控制器 + 7 个前台控制器 + 14 个 Service + 11 个 Mapper |
+| **weblog-vue3** | 前端展示层 | Vue 3 + Vite + Element Plus + TailwindCSS |
 
 ### 模块依赖关系
-```
-WeBlog-parent (pom)
-    ├── WeBlog-common (jar)
-    │    ├── spring-boot-starter-web
-    │    ├── spring-boot-starter-security
-    │    ├── mybatis-plus-spring-boot3-starter
-    │    ├── aliyun-sdk-oss
-    │    ├── jjwt-api (JWT)
-    │    └── 配置类、工具类、异常处理
-    │
-    ├── WeBlog-pojo (jar)
-    │    ├── spring-boot-starter-validation
-    │    ├── mybatis-plus-core
-    │    ├── jackson-databind
-    │    └── DTO、VO、查询参数
-    │
-    └── WeBlog-server (jar, 可执行)
-         ├── WeBlog-common
-         ├── WeBlog-pojo
-         ├── spring-boot-starter-web
-         ├── mybatis-plus-spring-boot3-starter
-         ├── spring-boot-starter-security
-         ├── mysql-connector-j
-         ├── springdoc-openapi-starter-webmvc-ui
-         └── 控制器、服务层、Mapper、实体类
 
-依赖方向: WeBlog-server → WeBlog-common → WeBlog-pojo
+```
+WeBlog-parent（聚合 POM）
+  ├── weblog-common（jar，编译跳过 repackage）
+  │     └── Spring Security / Redis / JWT / OSS / 工具类
+  ├── weblog-pojo（jar，编译跳过 repackage）
+  │     └── DTO / Entity / VO / 校验注解
+  ├── weblog-monitor（jar，编译跳过 repackage）
+  │     ├── weblog-common（依赖）
+  │     └── Spring AOP / 事件驱动
+  ├── weblog-ai（jar，编译跳过 repackage）
+  │     ├── weblog-common（依赖）
+  │     └── RestClient / MyBatis-Plus / Jackson
+  └── weblog-server（jar，可执行）
+        ├── weblog-common / weblog-pojo / weblog-monitor / weblog-ai
+        └── Spring Boot Starter / MyBatis-Plus / MySQL / Swagger
+
+依赖方向: weblog-server → weblog-ai → weblog-monitor → weblog-common → weblog-pojo
 ```
 
 ## 🚀 技术栈
 
 ### 后端技术
-- **核心框架**: Spring Boot 3.5.9 (基于Spring Framework 6.x)
-- **Java版本**: JDK 17+
-- **构建工具**: Maven 3.6+
-- **ORM框架**: MyBatis-Plus 3.5.10.1 (增强MyBatis功能)
-- **安全框架**:
-  - Spring Security 6.x (认证授权)
-  - JWT 0.12.5 (Token认证)
-- **数据库**:
-  - MySQL 8.0.33 (主数据库)
-  - HikariCP 4.0.3 (连接池)
-- **API文档**: SpringDoc OpenAPI 2.8.9 (替代Swagger)
-- **文件存储**: 阿里云OSS SDK 3.17.4
-- **开发工具**:
-  - Lombok 1.18.42 (代码简化)
-  - Validation API (参数校验)
-- **其他依赖**:
-  - Servlet API 6.0.0 (Jakarta EE)
-  - JAXB 2.3.3 (XML处理)
-  - Jackson (JSON处理)
+
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Spring Boot | 3.5.9 | 核心框架（Spring Framework 6.x） |
+| Java | 17 | |
+| MyBatis-Plus | 3.5.10.1 | ORM 框架（逻辑删除、分页、驼峰映射） |
+| Spring Security | 6.x | 认证授权（JWT + Redis 白名单） |
+| JWT (jjwt) | 0.12.5 | Token 签发与验证 |
+| MySQL | 8.0.33 | 关系数据库 |
+| Druid | 1.2.27 | 生产环境连接池 |
+| HikariCP | - | 开发环境连接池 |
+| Spring Data Redis | - | Token 白名单缓存（Lettuce 连接池） |
+| SpringDoc OpenAPI | 2.8.9 | API 文档（/swagger-ui.html） |
+| Aliyun OSS SDK | 3.18.0 | 文件存储 |
+| Lombok | 1.18.42 | 代码简化 |
+| Jakarta Servlet | 6.0.0 | Servlet 规范 |
+| RestClient + Jackson | - | AI API 调用（纯 HTTP，非 LangChain4j） |
 
 ### 前端技术
-- **核心框架**: Vue 3.2.47 (组合式API)
-- **构建工具**: Vite 4.1.4 (下一代前端构建工具)
-- **UI框架**:
-  - Element Plus 2.3.3 (主要UI组件库)
-  - Naive UI 2.34.3 (备用组件库)
-- **样式框架**:
-  - Tailwind CSS 3.3.2 (实用优先的CSS框架)
-  - WindiCSS 3.5.6 (按需生成的Tailwind)
-- **状态管理**: Vuex 4.0.2 (集中式状态管理)
-- **路由管理**: Vue Router 4.1.6
-- **HTTP客户端**: Axios 1.3.5
-- **富文本编辑器**:
-  - mavon-editor 3.0.1 (Markdown编辑器)
-  - md-editor-v3 3.0.1
-  - editor.md 1.5.0
-- **图表库**: ECharts 5.4.2 (数据可视化)
-- **工具库**:
-  - VueUse 10.0.2 (Vue组合式工具)
-  - GSAP 3.11.5 (动画库)
-  - Highlight.js 11.8.0 (代码高亮)
-  - Moment.js 2.29.4 (时间处理)
-  - NProgress 0.2.0 (进度条)
 
-## 📊 数据库设计
-
-### 数据库ER图
-```
-┌─────────────┐      ┌──────────────────┐      ┌─────────────┐
-│   article   │◄────┤article_category_rel├────►│  category   │
-├─────────────┤      ├──────────────────┤      ├─────────────┤
-│ id          │      │ id               │      │ id          │
-│ title       │      │ article_id       │      │ name        │
-│ title_image │      │ category_id      │      │ create_time │
-│ description │      └──────────────────┘      │ update_time │
-│ create_time │                                 │ is_deleted  │
-│ update_time │      ┌──────────────────┐      └─────────────┘
-│ is_deleted  │      │ article_tag_rel  │
-│ read_num    │      ├──────────────────┤      ┌─────────────┐
-└─────────────┘      │ id               │      │    tag      │
-        │            │ article_id       │      ├─────────────┤
-        │            │ tag_id           │      │ id          │
-        ▼            └──────────────────┘      │ name        │
-┌─────────────┐                                │ create_time │
-│article_content│                               │ update_time │
-├─────────────┤                                │ is_deleted  │
-│ id          │                                └─────────────┘
-│ article_id  │
-│ content     │      ┌─────────────┐
-└─────────────┘      │   user      │
-                     ├─────────────┤
-┌─────────────┐      │ id          │      ┌─────────────┐
-│blog_setting │      │ username    │      │ user_role   │
-├─────────────┤      │ password    │      ├─────────────┤
-│ id          │      │ avatar      │      │ id          │
-│ blog_name   │      │ create_time │      │ username    │
-│ author      │      │ update_time │      │ role        │
-│ introduction│      │ is_deleted  │      │ create_time │
-│ avatar      │      └─────────────┘      └─────────────┘
-│ github_home │            │
-│ csdn_home   │            │
-│ gitee_home  │      ┌─────┴─────┐
-│ zhihu_home  │      │           │
-└─────────────┘      ▼           ▼
-              ┌─────────────┐ ┌─────────────┐
-              │statistics_  │ │ visitor_    │
-              │article_pv   │ │ record      │
-              ├─────────────┤ ├─────────────┤
-              │ id          │ │ id          │
-              │ pv_date     │ │ visitor     │
-              │ pv_count    │ │ ip_address  │
-              │ create_time │ │ ip_region   │
-              │ update_time │ │ visit_time  │
-              └─────────────┘ └─────────────┘
-```
-
-### 核心表结构说明
-项目包含11个核心表，主要分为以下几类：
-
-**文章相关表 (4个)**:
-1. `article` - 文章基本信息表（标题、描述、题图等）
-2. `article_content` - 文章内容表（分表设计，存储正文内容）
-3. `article_category_rel` - 文章分类关系表（多对多关联）
-4. `article_tag_rel` - 文章标签关系表（多对多关联）
-
-**分类标签表 (2个)**:
-5. `category` - 文章分类表
-6. `tag` - 文章标签表
-
-**系统配置表 (2个)**:
-7. `blog_setting` - 博客设置表（博客名称、作者、头像、社交链接等）
-8. `user` - 用户表（用户名、密码、头像等）
-
-**用户权限表 (1个)**:
-9. `user_role` - 用户角色表（用户角色管理）
-
-**统计相关表 (2个)**:
-10. `statistics_article_pv` - 文章访问统计表
-11. `visitor_record` - 访客记录表
-
-**设计特点**:
-- 使用`utf8mb4`字符集，支持Emoji表情
-- 所有表都有`create_time`和`update_time`字段，记录创建和更新时间
-- 使用软删除设计（`is_deleted`字段），避免物理删除数据
-- 文章内容与基本信息分离，优化查询性能
-- 支持多对多关系（文章-分类，文章-标签）
-
-## 📁 项目结构
-
-### 多模块Maven结构
-```
-WeBlog/                                  # 项目根目录
-├── WeBlog-parent/                       # 父模块（pom）
-│   ├── pom.xml                         # 父模块配置，统一管理依赖版本
-│   └── (无源码，仅管理子模块)
-│
-├── WeBlog-common/                       # 公共模块（jar）
-│   ├── src/main/java/com/blog/
-│   │   ├── config/                     # 配置类
-│   │   │   ├── CorsConfig.java         # 跨域配置
-│   │   │   ├── SecurityConfig.java     # 安全配置
-│   │   │   └── OpenApiConfig.java      # API文档配置
-│   │   ├── exception/                  # 异常处理
-│   │   │   ├── BusinessException.java  # 业务异常
-│   │   │   └── GlobalExceptionHandler.java
-│   │   ├── filter/                     # 过滤器
-│   │   │   └── JwtAuthenticationFilter.java
-│   │   ├── result/                     # 统一返回结果
-│   │   │   ├── Result.java
-│   │   │   └── PageResult.java
-│   │   └── utils/                      # 工具类
-│   │       ├── AliyunOSSOperator.java  # OSS操作工具
-│   │       ├── AliyunOSSProperties.java
-│   │       └── JwtUtil.java            # JWT工具
-│   └── pom.xml                         # 公共模块依赖
-│
-├── WeBlog-pojo/                         # 数据模型模块（jar）
-│   ├── src/main/java/com/blog/
-│   │   ├── dto/                        # 数据传输对象
-│   │   │   ├── ArticlePublishDTO.java
-│   │   │   ├── ArticleUpdateDTO.java
-│   │   │   ├── AuthDTO.java
-│   │   │   └── ...
-│   │   ├── vo/                         # 视图对象
-│   │   └── query/                      # 查询参数
-│   └── pom.xml                         # 数据模型模块依赖
-│
-├── WeBlog-server/                       # 业务模块（jar，可执行）
-│   ├── src/main/java/com/blog/
-│   │   ├── controller/                 # 控制器层
-│   │   │   ├── admin/                  # 后台管理接口
-│   │   │   │   ├── AdminArticleController.java
-│   │   │   │   ├── AdminAuthController.java
-│   │   │   │   ├── AdminCategoryController.java
-│   │   │   │   └── ...
-│   │   │   └── frontend/               # 前台展示接口
-│   │   │       ├── ArticleController.java
-│   │   │       ├── CategoryController.java
-│   │   │       └── ...
-│   │   ├── service/                    # 服务层
-│   │   │   ├── impl/                   # 服务实现
-│   │   │   └── ...
-│   │   ├── mapper/                     # 数据访问层
-│   │   │   ├── ArticleMapper.java
-│   │   │   ├── CategoryMapper.java
-│   │   │   └── ...
-│   │   └── entity/                     # 实体类
-│   │       ├── Article.java
-│   │       ├── Category.java
-│   │       └── ...
-│   ├── src/main/resources/
-│   │   ├── application.yaml            # 应用配置
-│   │   ├── application-dev.yaml        # 开发环境配置
-│   │   ├── application-prod.yaml       # 生产环境配置
-│   │   └── mapper/                     # MyBatis XML映射
-│   ├── src/main/java/com/blog/WeBlogApplication.java  # 启动类
-│   └── pom.xml                         # 业务模块依赖
-│
-├── weblog-vue3/                        # 前端项目（独立）
-│   ├── src/
-│   │   ├── api/                        # API接口定义
-│   │   │   ├── admin/                  # 后台管理API
-│   │   │   └── frontend/               # 前台API
-│   │   ├── assets/                     # 静态资源
-│   │   ├── components/                 # 公共组件
-│   │   ├── composables/                # 组合式函数
-│   │   ├── layouts/                    # 布局组件
-│   │   ├── pages/                      # 页面组件
-│   │   │   ├── admin/                  # 后台页面
-│   │   │   └── front/                  # 前台页面
-│   │   ├── router/                     # 路由配置
-│   │   ├── store/                      # Vuex状态管理
-│   │   └── utils/                      # 工具函数
-│   ├── public/                         # 公共资源
-│   ├── package.json                    # 前端依赖配置
-│   ├── vite.config.js                  # Vite构建配置
-│   ├── tailwind.config.js              # Tailwind配置
-│   └── postcss.config.js               # PostCSS配置
-│
-├── sql/                                # 数据库脚本
-│   └── weblog.sql                      # 数据库初始化脚本
-│
-├── pom.xml                             # 根pom.xml（聚合模块）
-├── .gitignore
-└── README.md
-```
-
-### 构建说明
-```bash
-# 1. 完整构建所有模块（在项目根目录）
-mvn clean install
-
-# 2. 仅构建server模块（会自动构建依赖的common和pojo模块）
-cd WeBlog-server
-mvn clean package
-
-# 3. 运行项目
-java -jar target/WeBlog-server-0.0.1-SNAPSHOT.jar
-
-# 4. 开发环境运行（热部署）
-cd WeBlog-server
-mvn spring-boot:run
-```
-
-### 模块职责说明
-- **WeBlog-parent**: 依赖管理、统一配置、插件管理，不包含业务代码
-- **WeBlog-common**: 通用组件、工具类、配置类、异常处理、安全过滤、OSS操作等
-- **WeBlog-pojo**: 数据传输对象（DTO）、视图对象（VO）、查询参数等数据模型
-- **WeBlog-server**: 业务逻辑、控制器、服务层、数据访问层、实体类等核心业务
-- **weblog-vue3**: 前端展示层，独立部署，通过RESTful API与后端通信
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Vue | 3.2.47 | 核心框架（Composition API + `<script setup>`） |
+| Vite | 4.1.4 | 构建工具（端口 6066） |
+| Vue Router | 4.1.6 | 路由（History 模式） |
+| Vuex | 4.0.2 | 状态管理（user / setting / menuWidth） |
+| Element Plus | 2.3.3 | 后台 UI 组件库 |
+| TailwindCSS | 3.3.2 | 前台 CSS 框架 |
+| WindiCSS | 3.5.6 | 按需 CSS（vite-plugin-windicss） |
+| Flowbite | 1.7.0 | Tailwind 组件库（导航/下拉菜单） |
+| Axios | 1.3.5 | HTTP 客户端（请求 ↓ Token 注入 / 响应 ↑ 401/403 拦截） |
+| ECharts | 5.4.2 | 仪表盘图表 |
+| highlight.js | 11.8.0 | 代码高亮（tokyo-night-dark 主题） |
+| mavon-editor / md-editor-v3 | 3.0.x | Markdown 编辑器 |
+| v-viewer + viewerjs | 3.0.11 | 图片点击预览 |
+| GSAP / animate.css | 3.11.5 / 4.1.1 | 动画库 |
+| @vueuse/core | 10.0.2 | 工具库（useCookies 管理 Token） |
+| NProgress | 0.2.0 | 页面顶部进度条 |
 
 ## ✨ 功能特性
 
 ### 后台管理功能
-- **文章管理**: 文章的增删改查、发布、分类、标签管理
-- **用户管理**: 用户信息管理、权限控制
-- **分类管理**: 文章分类管理
-- **标签管理**: 文章标签管理
-- **博客设置**: 博客基本信息配置
-- **仪表盘**: 数据统计和可视化
-- **认证授权**: 基于JWT和Spring Security的认证系统
+- **仪表盘**：文章发布统计、PV 访问量图表（ECharts）
+- **文章管理**：文章的增删改查、分类/标签关联
+- **分类管理**：文章分类 CRUD
+- **标签管理**：文章标签 CRUD
+- **博客设置**：博客名称、作者、头像、社交链接配置
+- **监控中心**：
+  - **实时日志**：HTTP 请求日志采集（URI/耗时/IP/异常）
+  - **告警规则**：按日志级别/时间窗口/阈值配置告警
+  - **告警记录**：告警触发历史 + 邮件通知
+- **AI 索引管理**：重建文章向量索引（供 RAG 检索使用）
+- **认证授权**：JWT + Redis 白名单 + 角色控制（ROLE_ADMIN / ROLE_VISITOR）
 
 ### 前台展示功能
-- **文章展示**: 文章列表、详情页
-- **分类浏览**: 按分类查看文章
-- **标签云**: 标签展示和筛选
-- **搜索功能**: 文章搜索
-- **访客统计**: 访问量统计
-- **响应式设计**: 支持移动端和桌面端
+- **文章展示**：首页文章列表、详情页（代码高亮 + 图片预览）
+- **分类浏览**：按分类查看文章列表
+- **标签云**：按标签筛选文章
+- **归档**：按年月时间线展示文章（可折叠）
+- **搜索**：全站文章搜索
+- **AI 智能问答（小智）**：
+  - RAG 检索增强：基于博客内容回答问题
+  - SSE 流式输出：逐 token 显示 AI 回答
+  - 会话管理：24 小时过期 + localStorage 持久化
+  - 引用来源：AI 回答附带博客文章引用
+  - 中断控制：用户可随时停止 AI 生成
+- **AI 文字游戏**：交互式文字冒险游戏
+
+### 访客统计
+- PV 统计：每日页面浏览量
+- 访客记录：IP 地址、地区、访问时间
+
+## 📊 数据库设计（15 张表）
+
+### 文章相关表（4 张）
+- `article` — 文章基本信息（标题、描述、题图、阅读数、逻辑删除）
+- `article_content` — 文章内容（分表设计，TEXT 存储）
+- `article_category_rel` — 文章-分类关联（一篇文章一个分类）
+- `article_tag_rel` — 文章-标签关联（多对多）
+
+### 分类标签表（2 张）
+- `category` — 文章分类（name 唯一约束）
+- `tag` — 文章标签（name 唯一约束）
+
+### 系统配置表（2 张）
+- `user` — 用户（BCrypt 加密密码）
+- `blog_setting` — 博客设置（名称/作者/头像/社交链接）
+
+### 用户权限表（1 张）
+- `user_role` — 用户角色（ROLE_ADMIN / ROLE_VISITOR）
+
+### 监控告警表（3 张）
+- `monitor_log` — HTTP 请求日志（URI/方法/耗时/异常/IP）
+- `monitor_alert_rule` — 告警规则（日志级别/时间窗口/阈值）
+- `monitor_alert_record` — 告警触发记录
+
+### AI 问答表（1 张）
+- `ai_chat_memory` — AI 聊天记录（session_id / 用户消息 / AI 回答 / 引用来源 JSON）
+
+### 统计相关表（2 张）
+- `statistics_article_pv` — PV 统计（日维度）
+- `visitor_record` — 访客记录
+
+**设计特点**：
+- 使用 `utf8mb4` 字符集，支持 Emoji
+- 所有表拥有 `create_time` / `update_time` 自动填充
+- 业务表软删除（`is_deleted` 字段），MyBatis-Plus 全局配置
+- 主键均为 `AUTO_INCREMENT`
 
 ## 🏃 快速开始
 
 ### 环境要求
+
 - **JDK**: 17+
 - **MySQL**: 8.0+
 - **Node.js**: 16+
@@ -379,143 +224,112 @@ mvn spring-boot:run
 
 ### 1. 数据库初始化
 
-1. 创建MySQL数据库：
 ```sql
 CREATE DATABASE weblog CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ```
 
-2. 执行初始化脚本：
 ```bash
 mysql -u root -p weblog < sql/weblog.sql
 ```
 
-### 2. 后端配置和启动
+### 2. 后端配置
 
-#### 配置文件修改
-修改数据库配置（`WeBlog-server/src/main/resources/application.yaml`）：
+编辑 `weblog-server/src/main/resources/application-local.yaml`：
+
 ```yaml
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/weblog?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456  # 修改为你的数据库密码
+
+# AI 配置（API Key 需替换）
+ai:
+  zhipu:
+    api-key: your-api-key
 ```
 
-如果需要使用阿里云OSS，配置OSS信息（同上文件）：
-```yaml
-aliyun:
-  oss:
-    endpoint: https://oss-cn-beijing.aliyuncs.com
-    bucketName: your-bucket-name
-    access-key-id: your-access-key-id
-    access-key-secret: your-access-key-secret
-```
+### 3. 启动后端
 
-#### 多模块构建方式
 ```bash
-# 方式一：从根目录构建所有模块（推荐）
-# 确保在项目根目录（包含pom.xml的目录）
-mvn clean install
+# 完整构建（根目录执行）
+mvn clean install -DskipTests
 
-# 方式二：单独构建server模块（会自动构建依赖模块）
-cd WeBlog-server
-mvn clean package
-
-# 运行项目
-java -jar target/WeBlog-server-0.0.1-SNAPSHOT.jar
+# 开发运行
+mvn spring-boot:run -pl weblog-server -DskipTests
 ```
 
-#### 开发环境运行
-```bash
-# 在WeBlog-server目录下直接运行（支持热部署）
-cd WeBlog-server
-mvn spring-boot:run
-```
+后端默认运行在 `http://localhost:8081`，API 文档：`http://localhost:8081/swagger-ui.html`
 
-后端默认运行在 `http://localhost:8081`
+### 4. 启动前端
 
-### 3. 前端配置和启动
-
-1. 进入前端目录：
 ```bash
 cd weblog-vue3
-```
-
-2. 安装依赖：
-```bash
 npm install
-```
-
-3. 启动前端开发服务器：
-```bash
 npm run dev
 ```
 
-前端默认运行在 `http://localhost:5173`
+前端默认运行在 `http://localhost:6066`，Vite 自动代理 `/api` → `http://localhost:8081`
 
-4. 配置代理（如果需要，在vite.config.js中添加）：
-```javascript
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8081',
-      changeOrigin: true,
-      rewrite: (path) => path.replace(/^\/api/, '')
-    }
-  }
-}
-```
+## 📚 API 文档
 
-## 📚 API文档
+启动后端后访问：`http://localhost:8081/swagger-ui.html`
 
-项目集成了Swagger UI，启动后端服务后访问：
-- **Swagger UI**: http://localhost:8081/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8081/v3/api-docs
+### 后台接口（需 JWT 认证）
+- `POST /admin/article/*` — 文章 CRUD
+- `POST /admin/category/*` — 分类管理
+- `POST /admin/tag/*` — 标签管理
+- `POST /admin/user/*` — 用户管理
+- `POST /admin/dashboard/*` — 仪表盘数据
+- `POST /admin/blog/setting` — 博客设置
+- `POST /ai/admin/rebuild` — AI 重建向量索引
+
+### 前台接口（免认证）
+- `POST /index/**` — 首页文章列表
+- `POST /article/**` — 文章详情/搜索
+- `POST /category/**` — 分类列表/分类下文章
+- `POST /tag/**` — 标签列表/标签下文章
+- `POST /archive/list` — 归档数据
+- `POST /blog/**` — 博客设置
+- `POST /game/**` — AI 文字游戏
+- `POST /ai/chat` — AI 非流式对话
+- `POST /ai/chat/stream` — AI 流式对话（SSE）
+- `GET /ai/session/validate` — 校验会话有效性
+- `GET /ai/session/history` — 获取会话历史
 
 ## 🚢 部署说明
 
 ### 后端部署
 
-1. 生产环境配置：
-创建 `application-druid.yaml` 文件并设置：
-```yaml
-spring:
-  profiles:
-    active: druid
-```
+```bash
+# 构建可执行 JAR
+mvn clean package -DskipTests
 
-2. 使用Docker部署（Dockerfile示例）：
-```dockerfile
-FROM openjdk:17-jdk-slim
-COPY target/WeBlog-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# 启动（指定生产配置）
+java -jar weblog-server/target/weblog-server-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
 ```
 
 ### 前端部署
 
-1. 构建生产版本：
 ```bash
+cd weblog-vue3
 npm run build
+# 部署 dist/ 目录到 Nginx
 ```
 
-2. 部署构建产物（在 `dist/` 目录）到Web服务器。
-
-### Nginx配置示例
+### Nginx 配置示例
 
 ```nginx
 server {
     listen 80;
     server_name your-domain.com;
 
-    # 前端静态文件
     location / {
         root /path/to/weblog-vue3/dist;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
-    # 后端API代理
     location /api/ {
         proxy_pass http://localhost:8081/;
         proxy_set_header Host $host;
@@ -524,43 +338,43 @@ server {
 }
 ```
 
-## 🤝 贡献指南
+## 🔧 关键设计说明
 
-欢迎提交Issue和Pull Request！
+### 认证流程
 
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启一个Pull Request
+1. 登录 → `AuthenticationManager` 验证 → 签发 JWT → 写入 Redis 白名单 → 返回 Token
+2. 请求 → `JwtAuthenticationFilter` 提取 Bearer token → 解析 JWT → 校验 Redis → 设置 `SecurityContextHolder`
+3. 前端 Cookie 存储 Token，Axios 请求拦截器自动注入
 
-### 开发规范
+### AI 问答（RAG）流程
 
-- 后端代码遵循Java开发规范
-- 前端代码使用ESLint进行代码检查
-- 提交信息使用英文描述
-- 确保所有测试通过
+1. **索引构建**：文章发布/编辑 → `ArticleChangeEvent` → `@TransactionalEventListener(AFTER_COMMIT)` → `RagService` 更新向量索引
+2. **首次部署**：`VectorIndexInitializer` 启动时自动构建空索引，从数据库加载所有已发布文章
+3. **用户提问**：问题 → 向量检索 Top-K 相关文章 → 组装 Prompt（系统指令 + 历史对话 + RAG 上下文） → 智谱 API 返回回答
+4. **流式输出**：SSE（`SseEmitter` + `exchange()` 原生流解析），`event:chunk` 逐 token 返回
+5. **会话管理**：24 小时过期，自动创建新会话，localStorage 持久化 sessionId
+
+### 监控告警流程
+
+1. `ControllerMonitorAspect`（@Aspect）拦截所有 Controller 请求，记录耗时/异常
+2. 慢请求（>3s）日志 WARN 级别，发布 `LogEvent`
+3. `AlertService` 定时扫描告警规则，按时间窗口统计日志命中数
+4. 超过阈值 → 写入 `monitor_alert_record` + 邮件通知
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 📞 联系方式
-
-如有问题或建议，请通过以下方式联系：
-
-- 提交 [Issue](https://github.com/frefsd/WeBlog/issues)
+本项目采用 MIT 许可证。
 
 ## 🙏 致谢
 
-感谢以下开源项目的支持：
-- Spring Boot
-- Vue.js
-- Element Plus
-- MyBatis-Plus
-- [WeBlog](https://gitee.com/AllenJiang/WeBlog)
+- [Spring Boot](https://spring.io/projects/spring-boot)
+- [Vue.js](https://vuejs.org/)
+- [Element Plus](https://element-plus.org/)
+- [MyBatis-Plus](https://baomidou.com/)
+- [智谱 AI](https://open.bigmodel.cn/)
+- [WeBlog（参考项目）](https://gitee.com/AllenJiang/WeBlog)
 - 以及其他所有依赖的开源项目
 
 ---
 
-**提示**: 首次使用请确保修改数据库配置、JWT密钥和OSS密钥等敏感信息。
+**提示**：首次使用请确保修改数据库密码、JWT 密钥和 AI API Key 等敏感信息。

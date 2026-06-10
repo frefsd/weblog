@@ -7,8 +7,11 @@ import com.blog.ai.mapper.AiChatMemoryMapper;
 import com.blog.ai.service.ChatMemoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,13 +23,14 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
     private final AiProperties aiProperties;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveChat(String sessionId, String userMessage, String aiMessage, String sourcesJson) {
         AiChatMemory record = new AiChatMemory();
         record.setSessionId(sessionId);
         record.setUserMessage(userMessage);
         record.setAiMessage(aiMessage);
         record.setSources(sourcesJson);
-        record.setCreateTime(LocalDateTime.now());
+        record.setCreateTime(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
         chatMemoryMapper.insert(record);
     }
 
@@ -45,13 +49,22 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
         // 检验当前会话是否过期
         LocalDateTime lastActive = records.get(0).getCreateTime();
         int timeout = aiProperties.getChatMemory().getSessionTimeoutSeconds();
-        if (lastActive != null && lastActive.plusSeconds(timeout).isBefore(LocalDateTime.now())) {
+        if (lastActive != null && lastActive.plusSeconds(timeout).isBefore(LocalDateTime.now(ZoneId.of("Asia/Shanghai")))) {
             // 会话已过期，返回空列表
             return List.of();
         }
         // Reverse to chronological order
         Collections.reverse(records);
         return records;
+    }
+
+    @Override
+    public List<AiChatMemory> getChatHistory(String sessionId) {
+        return chatMemoryMapper.selectList(
+                new LambdaQueryWrapper<AiChatMemory>()
+                        .eq(AiChatMemory::getSessionId, sessionId)
+                        .orderByAsc(AiChatMemory::getCreateTime)
+        );
     }
 
     @Override
@@ -70,6 +83,6 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
         }
         LocalDateTime lastActive = records.get(0).getCreateTime();
         int timeout = aiProperties.getChatMemory().getSessionTimeoutSeconds();
-        return !(lastActive != null && lastActive.plusSeconds(timeout).isBefore(LocalDateTime.now()));
+        return !(lastActive != null && lastActive.plusSeconds(timeout).isBefore(LocalDateTime.now(ZoneId.of("Asia/Shanghai"))));
     }
 }

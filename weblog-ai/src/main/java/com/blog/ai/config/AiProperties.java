@@ -106,7 +106,7 @@ public class AiProperties {
          * <p>超过此时间未活跃的会话将被视为过期，
          * 前端在加载聊天页面时校验到过期后会清空聊天记录并生成新会话。</p>
          */
-        private int sessionTimeoutSeconds = 86400; // 默认 24 小时
+        private int sessionTimeoutSeconds = 3600; // 默认 6 小时
     }
 
     /**
