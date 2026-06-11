@@ -15,22 +15,20 @@ export function sendChatMessageStreamText(sessionId, question, signal) {
 
 /**
  * 校验会话是否有效
+ * 使用 POST 避免 GET 被浏览器/CDN 缓存
  * @param {string|null} sessionId
  * @returns {Promise<{success: boolean, data: {valid: boolean, sessionId: string|null}}>}
  */
 export function validateSession(sessionId) {
-    return axios.get('/ai/session/validate', {
-        params: { sessionId }
-    })
+    return axios.post('/ai/session/validate', { sessionId })
 }
 
 /**
  * 获取会话的历史聊天记录
+ * 使用 POST 避免 GET 被浏览器/CDN 缓存
  * @param {string} sessionId
  * @returns {Promise<{success: boolean, data: Array}>}
  */
 export function getChatHistory(sessionId) {
-    return axios.get('/ai/session/history', {
-        params: { sessionId }
-    })
+    return axios.post('/ai/session/history', { sessionId })
 }

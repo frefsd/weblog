@@ -104,7 +104,9 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public boolean validateSession(String sessionId) {
-        return chatMemoryService.validateSession(sessionId);
+        boolean valid = chatMemoryService.validateSession(sessionId);
+        log.debug("validateSession: sessionId={}, result={}", sessionId, valid);
+        return valid;
     }
 
     @Override
@@ -159,26 +161,27 @@ public class ChatServiceImpl implements ChatService {
 
                 @Override
                 public void onComplete() {
-                    // 先写元数据，再写数据库（保证前端能拿到 sessionId）
+                    List<ChatSourceVO> sources = buildSources(searchResults);
+
+                    // ⚠️ 先保存数据库（即使 meta 写入失败数据也不丢失）
+                    try {
+                        String sourcesJson = objectMapper.writeValueAsString(sources);
+                        chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);
+                    } catch (Exception e) {
+                        log.error("保存聊天记录失败(不影响使用): sessionId={}", sid, e);
+                    }
+
+                    // 再写元数据到响应（如果响应已关闭/超时，这里会抛 IOException 但数据已持久化）
                     Map<String, Object> meta = new HashMap<>();
                     meta.put("sessionId", sid);
                     try {
-                        List<ChatSourceVO> sources = buildSources(searchResults);
                         meta.put("sources", sources);
                         String metaJson = "\n___META___\n" + objectMapper.writeValueAsString(meta);
                         outputStream.write(metaJson.getBytes(StandardCharsets.UTF_8));
                         outputStream.flush();
                         log.info("纯文本流式完成，共 {} 字符", fullAnswer.length());
-
-                        // 异步保存聊天记录到数据库（即使失败也不影响前端）
-                        try {
-                            String sourcesJson = objectMapper.writeValueAsString(sources);
-                            chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);
-                        } catch (Exception e) {
-                            log.error("保存聊天记录失败(不影响使用): sessionId={}", sid, e);
-                        }
                     } catch (IOException e) {
-                        throw new RuntimeException("Failed to write meta", e);
+                        log.warn("元数据写入响应失败(响应可能已关闭/超时), sessionId={}, 但数据已保存", sid);
                     }
                 }
 
