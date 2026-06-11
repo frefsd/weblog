@@ -185,9 +185,11 @@ onMounted(async () => {
                 // 会话无效/过期 → 清除本地 sessionId，回到欢迎页
                 localStorage.removeItem(SESSION_KEY)
             }
+        } else {
+            console.warn('校验会话接口返回异常: res.success=', res?.success)
         }
-    } catch (_) {
-        // 校验接口失败，不做处理
+    } catch (err) {
+        console.warn('校验/加载聊天记录网络错误, 可能是后端接口不通:', err)
     }
     scrollToBottom()
 })
@@ -330,7 +332,6 @@ async function sendMessage() {
         const reader = response.body.getReader()
         const decoder = new TextDecoder('utf-8')
         let fullText = ''
-        let metaResolved = false
 
         while (true) {
             const { done, value } = await reader.read()
@@ -338,47 +339,37 @@ async function sendMessage() {
 
             fullText += decoder.decode(value, { stream: true })
 
-            // 检测是否包含元数据分隔符
-            if (fullText.includes('___META___') && !metaResolved) {
-                metaResolved = true
-                const cleanEnd = fullText.indexOf('___META___')
-                const textPart = fullText.substring(0, cleanEnd)
-                // 优化渲染：累积超过阈值则批量显示
-                const el2 = aiMsg._el
-                if (el2) {
-                    await renderStreamChunk(el2, textPart, aiMsg.content.length)
-                }
-                // 同步到 Vue reactive 状态
-                aiMsg.content = textPart
-
-                // 解析元数据
-                const metaStr = fullText.substring(fullText.lastIndexOf('___META___') + 11).trim()
-                try {
-                    const meta = JSON.parse(metaStr)
-                    aiMsg.sources = meta.sources || []
-                    if (meta.sessionId) {
-                        // 更新为服务端返回的 sessionId（不会再擅自生成新 ID）
-                        setSessionId(meta.sessionId)
-                    }
-                } catch (e) {
-                    console.error('元数据解析失败:', metaStr, e)
-                }
-            } else if (!metaResolved) {
-                // 优化渲染：累积超过阈值则批量显示
+            // 流式过程中：如果还未收到元数据标记，实时渲染文本内容
+            if (!fullText.includes('___META___')) {
                 const el2 = aiMsg._el
                 if (el2) {
                     await renderStreamChunk(el2, fullText, aiMsg.content.length)
                 }
-                // 同步到 Vue reactive 状态
                 aiMsg.content = fullText
             }
+            // 如果已包含 ___META___，不再继续渲染文本（等流结束后统一解析）
         }
 
-        // 流结束
-        if (!metaResolved) {
+        // 流结束后，从完整响应中提取正文并解析元数据
+        if (fullText.includes('___META___')) {
+            const cleanEnd = fullText.indexOf('___META___')
+            const textPart = fullText.substring(0, cleanEnd)
+            aiMsg.content = textPart
+
+            const metaStr = fullText.substring(fullText.lastIndexOf('___META___') + 11).trim()
+            try {
+                const meta = JSON.parse(metaStr)
+                aiMsg.sources = meta.sources || []
+                if (meta.sessionId) {
+                    setSessionId(meta.sessionId)
+                }
+            } catch (e) {
+                console.error('元数据JSON解析失败:', metaStr, e)
+            }
+        } else {
             aiMsg.content = fullText
         }
-        // 同步完成后标记结束，触发 Vue 切换到 markdown 视图
+        // 标记结束，触发 Vue 切换到 markdown 视图
         aiMsg.isStreaming = false
     } catch (err) {
         // 用户主动中断

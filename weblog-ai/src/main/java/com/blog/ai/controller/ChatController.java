@@ -29,8 +29,9 @@ public class ChatController {
     }
 
     @Operation(summary = "校验会话是否有效；无效时返回 sessionId=null")
-    @GetMapping("/session/validate")
-    public Result<Map<String, Object>> validateSession(@RequestParam(required = false) String sessionId) {
+    @PostMapping("/session/validate")
+    public Result<Map<String, Object>> validateSession(@RequestBody(required = false) Map<String, String> body) {
+        String sessionId = body != null ? body.get("sessionId") : null;
         Map<String, Object> data = new HashMap<>();
 
         if (sessionId == null || sessionId.isBlank()) {
@@ -46,8 +47,9 @@ public class ChatController {
     }
 
     @Operation(summary = "获取会话的历史聊天记录")
-    @GetMapping("/session/history")
-    public Result<List<Map<String, Object>>> getChatHistory(@RequestParam(required = false) String sessionId) {
+    @PostMapping("/session/history")
+    public Result<List<Map<String, Object>>> getChatHistory(@RequestBody(required = false) Map<String, String> body) {
+        String sessionId = body != null ? body.get("sessionId") : null;
         if (sessionId == null || sessionId.isBlank()) {
             return Result.ok(List.of());
         }
