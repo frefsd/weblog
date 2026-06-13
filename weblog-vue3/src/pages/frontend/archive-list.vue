@@ -111,7 +111,7 @@
                                                 {{ article.createTime }}
                                             </span>
                                             <span v-if="article.categoryName"
-                                                class="inline-block px-1.5 py-px rounded text-[11px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                                class="inline-block px-1.5 py-px rounded text-[11px] font-medium bg-green-600 dark:bg-green-500 text-white dark:text-gray-200">
                                                 {{ article.categoryName }}
                                             </span>
                                         </div>

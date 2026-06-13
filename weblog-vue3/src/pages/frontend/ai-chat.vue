@@ -150,12 +150,12 @@ let abortController = null
 const SESSION_KEY = 'ai_session_id'
 
 function getSessionId() {
-    //return localStorage.getItem(SESSION_KEY) || null
+    return localStorage.getItem(SESSION_KEY) || null
 }
 
 function setSessionId(id) {
     if (id) {
-        //localStorage.setItem(SESSION_KEY, id)
+        localStorage.setItem(SESSION_KEY, id)
     }
 }
 

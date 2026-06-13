@@ -701,6 +701,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         vo.setTitleImage(article.getTitleImage());
         vo.setDescription(article.getDescription());
         vo.setCreateTime(article.getCreateTime().format(FRONTEND_DT));
+        vo.setReadNum(article.getReadNum());
 
         // 查询分类
         ArticleCategoryRel categoryRel = articleCategoryRelMapper.selectOne(

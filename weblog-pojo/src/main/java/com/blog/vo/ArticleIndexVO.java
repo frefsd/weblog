@@ -44,4 +44,9 @@ public class ArticleIndexVO {
      * 标签列表
      */
     private List<TagSimpleVO> tags;
+
+    /**
+     * 阅读量
+     */
+    private Integer readNum;
 }
