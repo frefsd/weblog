@@ -6,7 +6,6 @@ import com.blog.ai.entity.AiChatMemory;
 import com.blog.ai.mapper.AiChatMemoryMapper;
 import com.blog.ai.service.ChatMemoryService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +15,6 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatMemoryServiceImpl implements ChatMemoryService {
@@ -72,7 +70,6 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
     @Override
     public boolean validateSession(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
-            log.debug("validateSession: sessionId为空");
             return false;
         }
         List<AiChatMemory> records = chatMemoryMapper.selectList(
@@ -82,13 +79,10 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
                         .last("LIMIT 1")
         );
         if (records.isEmpty()) {
-            log.debug("validateSession: 未找到记录, sessionId={}", sessionId);
             return false;
         }
         LocalDateTime lastActive = records.get(0).getCreateTime();
         int timeout = aiProperties.getChatMemory().getSessionTimeoutSeconds();
-        log.debug("validateSession: 找到记录, sessionId={}, createTime={}, timeout={}s",
-                sessionId, lastActive, timeout);
         return !(lastActive != null && lastActive.plusSeconds(timeout).isBefore(LocalDateTime.now(ZoneId.of("Asia/Shanghai"))));
     }
 }
