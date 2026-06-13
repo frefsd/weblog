@@ -104,9 +104,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public boolean validateSession(String sessionId) {
-        boolean valid = chatMemoryService.validateSession(sessionId);
-        log.debug("validateSession: sessionId={}, result={}", sessionId, valid);
-        return valid;
+        return chatMemoryService.validateSession(sessionId);
     }
 
     @Override
@@ -163,7 +161,7 @@ public class ChatServiceImpl implements ChatService {
                 public void onComplete() {
                     List<ChatSourceVO> sources = buildSources(searchResults);
 
-                    // ⚠️ 先保存数据库（即使 meta 写入失败数据也不丢失）
+                    // 先保存数据库（即使 meta 写入失败数据也不丢失）
                     try {
                         String sourcesJson = objectMapper.writeValueAsString(sources);
                         chatMemoryService.saveChat(sid, question, fullAnswer.toString(), sourcesJson);

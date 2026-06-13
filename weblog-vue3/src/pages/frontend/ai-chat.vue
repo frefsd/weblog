@@ -64,7 +64,7 @@
                             class="mt-1.5 p-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg text-xs flex items-center gap-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                             @click="goArticle(src.articleId)">
                             <span class="text-blue-700 dark:text-blue-300 font-medium truncate">{{ src.articleTitle
-                                }}</span>
+                            }}</span>
                             <span class="text-gray-400 ml-auto flex-shrink-0">→</span>
                         </div>
                     </div>
@@ -150,12 +150,12 @@ let abortController = null
 const SESSION_KEY = 'ai_session_id'
 
 function getSessionId() {
-    return localStorage.getItem(SESSION_KEY) || null
+    //return localStorage.getItem(SESSION_KEY) || null
 }
 
 function setSessionId(id) {
     if (id) {
-        localStorage.setItem(SESSION_KEY, id)
+        //localStorage.setItem(SESSION_KEY, id)
     }
 }
 
@@ -167,6 +167,7 @@ onUnmounted(() => {
 // 挂载时从后端校验 session 并加载聊天记录
 onMounted(async () => {
     const sid = getSessionId()
+    //console.log('[AI Chat] onMounted: localStorage sessionId =', sid)
     if (!sid) {
         // 无 sessionId → 显示欢迎页
         scrollToBottom()
@@ -178,18 +179,18 @@ onMounted(async () => {
             if (res.data.valid) {
                 // 会话有效 → 从历史接口加载聊天记录
                 const hist = await getChatHistory(sid)
+                // console.log('[AI Chat] getChatHistory 返回:', JSON.stringify(hist))
                 if (hist.success && Array.isArray(hist.data)) {
                     messages.value = hist.data.map(m => ({ ...m, isStreaming: false }))
+                } else {
                 }
             } else {
                 // 会话无效/过期 → 清除本地 sessionId，回到欢迎页
                 localStorage.removeItem(SESSION_KEY)
             }
         } else {
-            console.warn('校验会话接口返回异常: res.success=', res?.success)
         }
     } catch (err) {
-        console.warn('校验/加载聊天记录网络错误, 可能是后端接口不通:', err)
     }
     scrollToBottom()
 })
@@ -321,6 +322,7 @@ async function sendMessage() {
     abortController = new AbortController()
 
     const sessionId = getSessionId()
+    console.log('[AI Chat] 发送消息: sessionId=', sessionId, 'question=', text)
 
     try {
         const response = await sendChatMessageStreamText(sessionId, text, abortController.signal)
@@ -361,6 +363,7 @@ async function sendMessage() {
                 const meta = JSON.parse(metaStr)
                 aiMsg.sources = meta.sources || []
                 if (meta.sessionId) {
+                    console.log('[AI Chat] 流完成: 设置 sessionId=', meta.sessionId)
                     setSessionId(meta.sessionId)
                 }
             } catch (e) {
