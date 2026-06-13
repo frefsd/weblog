@@ -6,26 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * AI 智能问答模块的配置属性绑定类。
  *
- * <p>所有以 {@code ai.} 开头的配置项都会映射到此类的字段中。
- * 支持在 {@code application.yaml}、{@code application-local.yaml}、
- * {@code application-druid.yaml} 中配置。</p>
- *
- * <h3>配置示例</h3>
- * <pre>{@code
- * ai:
- *   zhipu:
- *     api-key: 你的智谱API密钥
- *     model-name: glm-4-flash
- *   chat-memory:
- *     max-rounds: 5
- *   rag:
- *     top-k: 3
- *   api:
- *     timeout-seconds: 30
- *   embedding:
- *     chunk-size: 500
- *     chunk-overlap: 50
- * }</pre>
  */
 @Data
 @ConfigurationProperties(prefix = "ai")
@@ -53,8 +33,6 @@ public class AiProperties {
      *
      * <p>使用 OpenAI 兼容接口调用智谱 AI 的 GLM 系列模型。
      * API 文档：https://open.bigmodel.cn/dev/api</p>
-     *
-     * <p><b>配置前缀：</b>{@code ai.zhipu.*}</p>
      */
     @Data
     public static class Zhipu {

@@ -56,12 +56,12 @@
                                 class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden">
                                 <div class="p-6">
                                     <h2
-                                        class="text-xl font-bold text-gray-900 dark:text-white mb-3 hover:text-blue-600 dark:hover:text-blue-400">
-                                        {{ article.title }}
+                                        class="text-xl font-bold text-gray-900 dark:text-white mb-3 hover:text-blue-600 dark:hover:text-blue-400"
+                                        v-html="highlightKeyword(article.title, keyword)">
                                     </h2>
                                     <p v-if="article.description"
-                                        class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                                        {{ article.description }}
+                                        class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2"
+                                        v-html="highlightKeyword(article.description, keyword)">
                                     </p>
                                     <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                         <span>{{ article.createTime }}</span>
@@ -153,6 +153,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import { searchArticles } from '@/api/frontend/article'
+import { highlightKeyword } from '@/composables/util'
 
 const route = useRoute()
 const router = useRouter()
@@ -218,6 +219,7 @@ onMounted(() => {
 watch(() => route.query.q, (newQuery) => {
     if (newQuery) {
         keyword.value = decodeURIComponent(newQuery)
+        current.value = 1
         performSearch()
     }
 })
@@ -237,9 +239,9 @@ const performSearch = async () => {
 
     try {
         const response = await searchArticles(keyword.value.trim(), current.value, size.value)
-        if (response && response.data && response.data.data) {
-            articles.value = response.data.data.records || []
-            total.value = response.data.data.total || 0
+        if (response && response.data) {
+            articles.value = response.data.records || []
+            total.value = response.data.total || 0
         } else {
             articles.value = []
             total.value = 0

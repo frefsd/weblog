@@ -34,7 +34,7 @@
                     </button>
 
                     <!-- 移动端搜索触发按钮 -->
-                    <button type="button" data-collapse-toggle="navbar-search" aria-controls="navbar-search"
+                    <button type="button" data-collapse-toggle="mobile-search-panel" aria-controls="mobile-search-panel"
                         aria-expanded="false"
                         class="md:hidden text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 mr-1">
                         <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -113,11 +113,13 @@
                                                             @click="handleResultClick(article.id)"
                                                             class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                                             <div
-                                                                class="font-semibold text-lg text-gray-900 dark:text-white mb-1">
-                                                                {{ article.title }}</div>
+                                                                class="font-semibold text-lg text-gray-900 dark:text-white mb-1"
+                                                                v-html="highlightKeyword(article.title, searchKeyword)">
+                                                            </div>
                                                             <div v-if="article.description"
-                                                                class="text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
-                                                                {{ article.description }}</div>
+                                                                class="text-gray-600 dark:text-gray-300 mb-2 line-clamp-2"
+                                                                v-html="highlightKeyword(article.description, searchKeyword)">
+                                                            </div>
                                                             <div
                                                                 class="flex items-center text-sm text-gray-400 dark:text-gray-500">
                                                                 <span>{{ article.createTime }}</span><span
@@ -270,7 +272,7 @@
                 </div>
 
                 <!-- 移动端搜索面板 (展开后显示) -->
-                <div id="navbar-search" class="hidden md:hidden mt-4">
+                <div id="mobile-search-panel" class="hidden md:hidden mt-4">
                     <!-- 这里只放移动端的搜索输入框，不放导航菜单，导航菜单在上面已经通过 collapse 控制了 -->
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -319,7 +321,8 @@
                                 class="divide-y divide-gray-100 dark:divide-gray-700">
                                 <div v-for="article in searchResults" :key="article.id"
                                     @click="handleResultClick(article.id)" class="py-4">
-                                    <div class="font-semibold text-gray-900 dark:text-white">{{ article.title }}</div>
+                                    <div class="font-semibold text-gray-900 dark:text-white"
+                                        v-html="highlightKeyword(article.title, searchKeyword)"></div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ article.createTime }}
                                         • {{
                                             article.readNum }} 阅读</div>
@@ -372,6 +375,7 @@ import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router';
 import { ref, watch, onMounted, nextTick } from 'vue'
 import { showModel, showMessage } from '@/composables/util'
+import { highlightKeyword } from '@/composables/util'
 import { initDropdowns, initCollapses, initModals } from 'flowbite'
 import { searchArticles } from '@/api/frontend/article'
 import { debounce } from 'lodash-es'
