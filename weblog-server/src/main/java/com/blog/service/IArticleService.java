@@ -48,6 +48,11 @@ public interface IArticleService extends IService<Article> {
     void deleteArticle(ArticleDeleteDTO dto);
 
     /**
+     * 切换文章置顶状态
+     */
+    void toggleArticleTop(Long articleId);
+
+    /**
      * 获取前台首页文章分页列表
      */
     IPage<ArticleIndexVO> getArticleIndexPage(ArticlePageDTO query);

@@ -13,9 +13,13 @@
 
                     <div v-for="(article, index) in articles" :key="index"
                         class="group bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl shadow-md hover:-translate-y-1.5 hover:shadow-xl hover:border-white/60 transition-all duration-300 dark:bg-gray-800/75 dark:border-gray-600/30 dark:hover:border-gray-500/50">
-                        <a @click="goArticleDetail(article.id)" class="cursor-pointer overflow-hidden rounded-t-xl">
-                            <img class="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500" :src="article.titleImage" />
-                        </a>
+                        <div class="relative overflow-hidden rounded-t-xl">
+                            <a @click="goArticleDetail(article.id)" class="cursor-pointer">
+                                <img class="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500" :src="article.titleImage" />
+                            </a>
+                            <span v-if="article.isTop === 1"
+                                class="absolute top-3 left-3 z-10 text-xs font-semibold px-2 py-0.5 rounded bg-yellow-300/90 text-yellow-800 shadow-sm">置顶</span>
+                        </div>
                         <div class="p-6">
                             <!-- 标签 -->
                             <div @click="goTagArticleListPage(item.id, item.name)" v-for="(item, index) in article.tags"

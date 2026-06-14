@@ -49,4 +49,9 @@ public class ArticleIndexVO {
      * 阅读量
      */
     private Integer readNum;
+
+    /**
+     * 是否置顶：0-否 1-是
+     */
+    private Integer isTop;
 }

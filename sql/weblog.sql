@@ -30,8 +30,10 @@ CREATE TABLE `article`  (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后一次更新时间',
   `is_deleted` tinyint NOT NULL DEFAULT 0 COMMENT '删除标志位：0：未删除 1：已删除',
   `read_num` int UNSIGNED NOT NULL DEFAULT 1 COMMENT '被阅读次数',
+  `is_top` tinyint NOT NULL DEFAULT 0 COMMENT '是否置顶：0-否 1-是',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
+  INDEX `idx_is_top_create_time`(`is_top` ASC, `create_time` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '文章表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------

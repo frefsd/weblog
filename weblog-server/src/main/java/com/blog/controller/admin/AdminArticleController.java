@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "文章相关接口", description = "用于文章的修改和查看详情")
+@Tag(name = "后台文章相关接口", description = "用于文章的修改和查看详情")
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -91,6 +91,17 @@ public class AdminArticleController {
     @PostMapping("/update")
     public Result<Void> updateArticle(@Valid @RequestBody ArticleUpdateDTO dto) {
         articleService.updateArticle(dto);
+        return Result.ok();
+    }
+
+    /**
+     * 切换文章置顶状态
+     */
+    @Operation(summary = "切换文章置顶状态")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/top")
+    public Result<Void> toggleArticleTop(@Valid @RequestBody ArticleTopDTO dto) {
+        articleService.toggleArticleTop(dto.getArticleId());
         return Result.ok();
     }
 }

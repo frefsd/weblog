@@ -19,3 +19,7 @@ export function deleteArticle(articleId) {
 export function updateArticle(data) {
     return axios.post("/admin/article/update", data)
 }
+
+export function toggleArticleTop(articleId) {
+    return axios.post("/admin/article/top", { articleId })
+}
