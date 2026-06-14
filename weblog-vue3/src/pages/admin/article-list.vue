@@ -30,7 +30,10 @@
             <el-table :data="tableData" stripe style="width: 100%" class="mt-4" v-loading="tableLoading">
                 <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
                     <template #default="scope">
-                        <span class="title-cell">{{ scope.row.title }}</span>
+                        <span class="title-cell">
+                            <el-tag v-if="scope.row.isTop === 1" size="small" type="warning" style="margin-right:4px; vertical-align: middle;">置顶</el-tag>
+                            {{ scope.row.title }}
+                        </span>
                     </template>
                 </el-table-column>
                 <el-table-column label="预览图" width="120">
@@ -42,8 +45,14 @@
                     <template #default="{ row }">
                         {{ row.createTime ? moment(row.createTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
                     </template>
-                </el-table-column> <el-table-column label="操作" width="250">
+                </el-table-column> <el-table-column label="操作" width="380">
                     <template #default="scope">
+                        <el-button size="small" :type="scope.row.isTop === 1 ? 'warning' : 'default'"
+                            @click="toggleTop(scope.row)">
+                            <el-icon class="mr-1">
+                                <Top />
+                            </el-icon>
+                            {{ scope.row.isTop === 1 ? '已置顶' : '置顶' }}</el-button>
                         <el-button size="small" @click="showArticleUpdateEditorShow(scope.row)">
                             <el-icon class="mr-1">
                                 <Edit />
@@ -186,7 +195,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { publishArticle, getArticlePageList, deleteArticle, getArticleDetail, updateArticle } from '@/api/admin/article'
+import { publishArticle, getArticlePageList, deleteArticle, getArticleDetail, updateArticle, toggleArticleTop } from '@/api/admin/article'
 import { uploadFile } from '@/api/admin/file'
 import MdEditor from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
@@ -195,7 +204,7 @@ import { useRouter } from 'vue-router'
 import { getCategorySelect } from '@/api/admin/category'
 import { selectTags, getTagSelect } from '@/api/admin/tag'
 import moment from 'moment';
-import { Search, RefreshRight } from '@element-plus/icons-vue'
+import { Search, RefreshRight, Top } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -443,6 +452,17 @@ const deleteArticleSubmit = (row) => {
                 message: '删除失败',
             })
         })
+}
+
+const toggleTop = (row) => {
+    toggleArticleTop(row.id).then((e) => {
+        if (e.success == true) {
+            showMessage(row.isTop === 1 ? '已取消置顶' : '已置顶', 'success')
+            getTableData()
+        } else {
+            showMessage(e.message || '操作失败', 'warning')
+        }
+    })
 }
 
 // 文章分类

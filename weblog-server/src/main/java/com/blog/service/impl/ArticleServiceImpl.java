@@ -134,7 +134,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .eq(Article::getIsDeleted, 0)
                 .like(searchTitle != null && !searchTitle.trim().isEmpty(), Article::getTitle, searchTitle.trim())
                 .ge(start != null, Article::getCreateTime, start)
-                .le(end != null, Article::getCreateTime, end);
+                .le(end != null, Article::getCreateTime, end)
+                .orderByDesc(Article::getIsTop)
+                .orderByDesc(Article::getCreateTime);
 
         long total = this.count(base);
         List<Article> records = total == 0
@@ -334,6 +336,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         eventPublisher.publishEvent(new ArticleChangeEvent(articleId, exist.getTitle(), null, ArticleChangeEvent.ChangeType.DELETED));
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {RedisConstants.ARTICLE_DETAIL_CACHE, RedisConstants.ARTICLE_INDEX_CACHE}, allEntries = true)
+    public void toggleArticleTop(Long articleId) {
+        Article article = articleMapper.selectById(articleId);
+        if (article == null || (article.getIsDeleted() != null && article.getIsDeleted() == 1)) {
+            throw new BusinessException("文章不存在");
+        }
+        Article update = new Article();
+        update.setId(articleId);
+        update.setIsTop(article.getIsTop() != null && article.getIsTop() == 1 ? 0 : 1);
+        update.setUpdateTime(LocalDateTime.now());
+        articleMapper.updateById(update);
+    }
+
     /**
      * 获取前台首页文章分页列表（缓存 5 分钟，避免 N+1 查询）
      */
@@ -347,6 +364,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 查询文章列表
         LambdaQueryWrapper<Article> base = new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
+                .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
 
         long total = this.count(base);
@@ -505,11 +523,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         final String searchKeyword = keyword; // 创建final变量用于lambda表达式
         LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
-                .and(wrapper -> 
+                .and(wrapper ->
                     wrapper.like(Article::getTitle, searchKeyword)
                            .or()
                            .like(Article::getDescription, searchKeyword)
                 )
+                .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
         
         log.info("查询条件: {}", queryWrapper.getCustomSqlSegment());
@@ -561,6 +580,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         LambdaQueryWrapper<Article> base = new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
                 .inSql(Article::getId, "SELECT article_id FROM article_category_rel WHERE category_id = " + categoryId)
+                .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
 
         Page<Article> pageParam = new Page<>(current, size);
@@ -593,6 +613,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         LambdaQueryWrapper<Article> base = new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
                 .inSql(Article::getId, "SELECT article_id FROM article_tag_rel WHERE tag_id = " + tagId)
+                .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
 
         long total = this.count(base);
@@ -619,6 +640,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 查询所有文章（按创建时间降序）
         List<Article> articleList = this.list(new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
+                .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime));
 
         // 预加载所有文章的分类关联（避免 N+1）
@@ -702,6 +724,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         vo.setDescription(article.getDescription());
         vo.setCreateTime(article.getCreateTime().format(FRONTEND_DT));
         vo.setReadNum(article.getReadNum());
+        vo.setIsTop(article.getIsTop());
 
         // 查询分类
         ArticleCategoryRel categoryRel = articleCategoryRelMapper.selectOne(

@@ -363,7 +363,7 @@ async function sendMessage() {
                 const meta = JSON.parse(metaStr)
                 aiMsg.sources = meta.sources || []
                 if (meta.sessionId) {
-                    console.log('[AI Chat] 流完成: 设置 sessionId=', meta.sessionId)
+                    //console.log('[AI Chat] 流完成: 设置 sessionId=', meta.sessionId)
                     setSessionId(meta.sessionId)
                 }
             } catch (e) {
