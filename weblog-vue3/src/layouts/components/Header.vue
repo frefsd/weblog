@@ -2,7 +2,7 @@
     <header class="sticky top-0 z-100">
         <nav
             class="bg-white border-gray-200 border-b dark:bg-gray-900 dark:border-gray-800 transition-colors duration-300">
-            <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <div class="w-full flex flex-wrap items-center justify-between mx-auto p-4">
 
                 <!-- LOGO 区域 -->
                 <a href="/" class="flex items-center">
@@ -11,6 +11,38 @@
                         {{ $store.state.setting.blogName }}
                     </span>
                 </a>
+
+                <!-- 导航链接 (桌面端) -->
+                <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-search">
+                    <ul
+                        class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+                        <li>
+                            <a @click="$router.push('/')"
+                                :class="[currPath == '/' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
+                                class="block py-2 pl-3 pr-4 rounded md:bg-transparent md:p-0" aria-current="page">首页</a>
+                        </li>
+                        <li>
+                            <a @click="$router.push('/category')"
+                                :class="[currPath == '/category' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
+                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">分类</a>
+                        </li>
+                        <li>
+                            <a @click="$router.push('/tag')"
+                                :class="[currPath == '/tag' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
+                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">标签</a>
+                        </li>
+                        <li>
+                            <a @click="$router.push('/archive')"
+                                :class="[currPath == '/archive' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
+                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">归档</a>
+                        </li>
+                        <li>
+                            <a @click="$router.push('/ai')"
+                                :class="[currPath == '/ai' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
+                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">小智</a>
+                        </li>
+                    </ul>
+                </div>
 
                 <!-- 右侧操作区：暗黑模式 + 搜索 + 用户 -->
                 <div class="flex items-center md:order-2">
@@ -237,38 +269,6 @@
                                 d="M1 1h15M1 7h15M1 13h15" />
                         </svg>
                     </button>
-                </div>
-
-                <!-- 导航链接 (桌面端) & 移动端搜索输入框容器 -->
-                <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-search">
-                    <ul
-                        class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
-                        <li>
-                            <a @click="$router.push('/')"
-                                :class="[currPath == '/' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
-                                class="block py-2 pl-3 pr-4 rounded md:bg-transparent md:p-0" aria-current="page">首页</a>
-                        </li>
-                        <li>
-                            <a @click="$router.push('/category')"
-                                :class="[currPath == '/category' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
-                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">分类</a>
-                        </li>
-                        <li>
-                            <a @click="$router.push('/tag')"
-                                :class="[currPath == '/tag' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
-                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">标签</a>
-                        </li>
-                        <li>
-                            <a @click="$router.push('/archive')"
-                                :class="[currPath == '/archive' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
-                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">归档</a>
-                        </li>
-                        <li>
-                            <a @click="$router.push('/ai')"
-                                :class="[currPath == '/ai' ? 'text-blue-700 dark:text-blue-500' : 'text-gray-900 dark:text-white']"
-                                class="block py-2 pl-3 pr-4 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:text-blue-500">小智</a>
-                        </li>
-                    </ul>
                 </div>
 
                 <!-- 移动端搜索面板 (展开后显示) -->
