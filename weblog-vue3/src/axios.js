@@ -8,7 +8,7 @@ let isRefreshing = false
 
 const instance = axios.create({
     baseURL: import.meta.env.VITE_APP_BASE_API,
-    timeout: 7000  // 请求超时时间（毫秒）：7 秒后无响应自动中断，避免用户无限等待
+    timeout: 120000  // 请求超时时间（毫秒）：30 秒后无响应自动中断
 });
 
 // 添加请求拦截器

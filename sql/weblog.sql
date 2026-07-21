@@ -56,7 +56,7 @@ DROP TABLE IF EXISTS `article_content`;
 CREATE TABLE `article_content`  (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '文章内容id',
   `article_id` bigint NOT NULL COMMENT '文章id',
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '正文内容',
+  `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '正文内容',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '文章内容表' ROW_FORMAT = DYNAMIC;

@@ -12,7 +12,6 @@
     <groupId>com.blog</groupId>
     <artifactId>WeBlog-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>weblog-parent</name>
     <packaging>pom</packaging>
     <description>WeBlog博客系统 - 父模块</description>
 
