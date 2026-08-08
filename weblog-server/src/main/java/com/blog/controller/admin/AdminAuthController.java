@@ -3,6 +3,8 @@ package com.blog.controller.admin;
 import com.blog.dto.LoginDTO;
 import com.blog.result.Result;
 import com.blog.service.IAuthService;
+import com.blog.utils.IpUtil;
+import com.blog.utils.RateLimiter;
 import com.blog.utils.RedisConstants;
 import com.blog.vo.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,8 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AdminAuthController {
 
+    /** 登录限流：每 IP 每分钟最多 5 次尝试（防暴力破解） */
+    private static final int LOGIN_MAX_PER_MINUTE = 5;
+
     private final IAuthService authService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final RateLimiter rateLimiter;
 
 
     /**
@@ -46,7 +52,10 @@ public class AdminAuthController {
      */
     @Operation(summary = "用户登录")
     @PostMapping("/login")
-    public Result<LoginVO> login(@Valid @RequestBody LoginDTO request) {
+    public Result<LoginVO> login(@Valid @RequestBody LoginDTO request, HttpServletRequest servletRequest) {
+        if (!rateLimiter.tryAcquire("login:" + IpUtil.getClientIp(servletRequest), LOGIN_MAX_PER_MINUTE, 60_000)) {
+            return Result.fail("登录尝试过于频繁，请稍后再试");
+        }
         LoginVO response = authService.login(request);
         return Result.ok(response);
     }
