@@ -236,18 +236,4 @@ class WeBlogServerApplicationTests {
         verify(alertRecordMapper, times(1)).selectPage(any(Page.class), any(Wrapper.class));
     }
 
-    @Test
-    @DisplayName("生成 BCrypt 加密密码")
-    void generateBcryptPassword() {
-        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
-                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-
-        String rawPassword = "libaizuishuai@admin";
-        String encodedPassword = encoder.encode(rawPassword);
-
-        System.out.println("===========================================");
-        System.out.println("原始密码: " + rawPassword);
-        System.out.println("加密后密码: " + encodedPassword);
-        System.out.println("===========================================");
-    }
 }
