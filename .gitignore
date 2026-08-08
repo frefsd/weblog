@@ -46,3 +46,4 @@ data/
 # Claude Code
 .claude/
 images/
+question/
