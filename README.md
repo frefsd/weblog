@@ -38,7 +38,7 @@
 |--------|------|
 | `vistor` | `vistor` |
 
-> 演示地址：`https://your-domain.com`（部署后可替换为你的线上地址）
+> 🌐 在线体验：**[https://www.fanchen.tech](https://www.fanchen.tech)**（已部署上线）
 
 ---
 
