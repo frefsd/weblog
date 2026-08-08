@@ -227,6 +227,6 @@ location /api/ {
 
 **如果这个项目对你有帮助，欢迎 ⭐ Star 支持！**
 
-📺 相关视频：[B 站视频链接（发布后替换）]
+📺 相关视频：[B 站演示视频](https://www.bilibili.com/video/BV1WPu56uEWk)
 
 </div>
