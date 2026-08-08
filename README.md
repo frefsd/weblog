@@ -44,13 +44,7 @@
 
 ## 📸 界面预览
 
-| 前台首页 | AI 智能问答 |
-|---------|------------|
-| ![前台首页](images/home.png) | ![AI 智能问答](images/ai-chat.png) |
-
-| 后台仪表盘 |
-|-----------|
-| ![后台仪表盘](images/admin.png) |
+界面效果演示请观看 B 站视频：[BV1WPu56uEWk](https://www.bilibili.com/video/BV1WPu56uEWk)，或直接访问在线体验地址。
 
 ---
 
