@@ -19,7 +19,7 @@
         <!-- card body -->
         <!-- 新增按钮 -->
         <div>
-            <el-button type="primary" @click="isArticlePublishEditorShow = true">
+            <el-button type="primary" @click="showArticlePublishEditor">
                 <el-icon class="mr-1">
                     <EditPen />
                 </el-icon>
@@ -63,7 +63,9 @@
                                 <View />
                             </el-icon>
                             预览</el-button>
-                        <el-button type="danger" size="small" @click="deleteArticleSubmit(scope.row)">
+                        <el-button type="danger" size="small" :loading="deletingId === scope.row.id"
+                            :disabled="deletingId !== null && deletingId !== scope.row.id"
+                            @click="deleteArticleSubmit(scope.row)">
                             <el-icon class="mr-1">
                                 <Delete />
                             </el-icon>
@@ -90,11 +92,11 @@
                     <h4 class="font-bold">写文章</h4>
                     <div>
                         <el-button @click="isArticlePublishEditorShow = false">取消</el-button>
-                        <el-button type="primary" @click="onSubmit">
+                        <el-button type="primary" @click="onSubmit" :loading="publishLoading">
                             <el-icon class="mr-1">
                                 <Promotion />
                             </el-icon>
-                            发布
+                            {{ publishLoading ? '发布中...' : '发布' }}
                         </el-button>
                     </div>
                 </div>
@@ -144,12 +146,12 @@
             <div class="my-header flex items-center justify-between">
                 <h4 class="font-bold">编辑文章</h4>
                 <div>
-                    <el-button @click="hideArticleUpdateEditor">取消</el-button>
-                    <el-button type="primary" @click="updateSubmit">
+                    <el-button @click="isArticleUpdateEditorShow = false">取消</el-button>
+                    <el-button type="primary" @click="updateSubmit" :loading="updateLoading">
                         <el-icon class="mr-1">
                             <Promotion />
                         </el-icon>
-                        提交
+                        {{ updateLoading ? '提交中...' : '提交' }}
                     </el-button>
                 </div>
             </div>
@@ -211,6 +213,9 @@ const router = useRouter()
 const isArticlePublishEditorShow = ref(false)
 const isArticleUpdateEditorShow = ref(false)
 const tableLoading = ref(false)
+const publishLoading = ref(false)
+const updateLoading = ref(false)
+const deletingId = ref(null)
 
 const searchTitle = ref('')
 const pickDate = ref('')
@@ -275,16 +280,8 @@ const handleTitleImageChange = (file) => {
     })
 }
 
-const hideArticleUpdateEditor = () => {
-    isArticleUpdateEditorShow.value = false
-    form.title = ''
-    form.content = '请输入内容'
-    form.titleImage = ''
-    form.categoryId = null
-    form.tags = []
-}
-
 const showArticleUpdateEditorShow = (row) => {
+    resetArticleForm()
     isArticleUpdateEditorShow.value = true
     let articleId = row.id
     getArticleDetail(articleId).then((e) => {
@@ -296,6 +293,8 @@ const showArticleUpdateEditorShow = (row) => {
             form.categoryId = e.data.categoryId
             form.tags = e.data.tagIds
             form.description = e.data.description
+        } else {
+            showMessage(e.message || '获取文章详情失败', 'warning', 'message')
         }
     })
 }
@@ -326,12 +325,31 @@ const previewArticle = (row) => {
 const form = reactive({
     id: null,
     title: '',
-    content: '请输入内容',
+    content: '',
     titleImage: '',
     categoryId: null,
     tags: [],
     description: ""
 })
+
+// 重置表单（打开发布/编辑弹窗前、提交成功后调用），覆盖全部 7 个字段 + 清除校验错误态
+const resetArticleForm = () => {
+    form.id = null
+    form.title = ''
+    form.content = ''
+    form.titleImage = ''
+    form.categoryId = null
+    form.tags = []
+    form.description = ''
+    publishArticleFormRef.value?.clearValidate()
+    updateArticleFormRef.value?.clearValidate()
+}
+
+// 打开发布弹窗：先重置表单再打开，兜底覆盖所有"未重置关闭"路径（取消/ESC）
+const showArticlePublishEditor = () => {
+    resetArticleForm()
+    isArticlePublishEditorShow.value = true
+}
 
 
 const publishArticleFormRef = ref(null)
@@ -380,51 +398,50 @@ const handleSizeChange = (e) => {
 
 
 const onSubmit = () => {
-    isArticlePublishEditorShow.value = true
-    console.log('提交内容' + form.content)
+    if (publishLoading.value) return
     publishArticleFormRef.value.validate((valid) => {
         if (!valid) {
             return false
         }
+        publishLoading.value = true
         publishArticle(form).then((e) => {
-            console.log(e)
             if (e.success == false) {
-                var message = e.message
-                showMessage(message, 'warning', 'message')
+                showMessage(e.message, 'warning', 'message')
                 return
             }
-
-            showMessage('发布成功', 'success', 'message')
+            resetArticleForm()
             isArticlePublishEditorShow.value = false
-            location.reload()
+            showMessage('发布成功', 'success', 'message')
+            getTableData()
+        }).finally(() => {
+            publishLoading.value = false
         })
     })
 }
 
 const updateSubmit = () => {
-    isArticleUpdateEditorShow.value = true
-    console.log('提交内容' + form.content)
+    if (updateLoading.value) return
     updateArticleFormRef.value.validate((valid) => {
         if (!valid) {
             return false
         }
+        updateLoading.value = true
         updateArticle(form).then((e) => {
-            console.log(e)
             if (e.success == false) {
-                var message = e.message
-                showMessage(message, 'warning', 'message')
+                showMessage(e.message, 'warning', 'message')
                 return
             }
-
-            showMessage('修改成功', 'success', 'message')
+            resetArticleForm()
             isArticleUpdateEditorShow.value = false
-            location.reload()
+            showMessage('修改成功', 'success', 'message')
+            getTableData()
+        }).finally(() => {
+            updateLoading.value = false
         })
     })
 }
 
 const deleteArticleSubmit = (row) => {
-    console.log(row.id)
     ElMessageBox.confirm(
         '是否确认要删除该文章?',
         '提示',
@@ -435,23 +452,20 @@ const deleteArticleSubmit = (row) => {
         }
     )
         .then(() => {
+            deletingId.value = row.id
             deleteArticle(row.id).then((e) => {
                 if (e.success == true) {
                     showMessage('删除成功', 'success')
-                    location.reload()
+                    getTableData()
                 } else {
                     let message = e.message
                     showMessage(message, 'warning')
                 }
-            })
-
-        })
-        .catch(() => {
-            ElMessage({
-                type: 'info',
-                message: '删除失败',
+            }).finally(() => {
+                deletingId.value = null
             })
         })
+        .catch(() => { })
 }
 
 const toggleTop = (row) => {

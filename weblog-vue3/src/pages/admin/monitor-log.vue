@@ -1,14 +1,14 @@
 <template>
     <el-card :body-style="{ padding: '20px' }" class="mb-5 border-1">
         <el-text class="mx-1 mr-3">日志级别</el-text>
-        <el-select v-model="searchLevel" placeholder="全部" clearable class="w-35 mr-5">
+        <el-select v-model="searchLevel" placeholder="全部" clearable class="search-select mr-5">
             <el-option label="ERROR" value="ERROR" />
             <el-option label="WARN" value="WARN" />
             <el-option label="INFO" value="INFO" />
         </el-select>
 
         <el-text class="mx-1 mr-3">日志类型</el-text>
-        <el-select v-model="searchType" placeholder="全部" clearable class="w-35 mr-5">
+        <el-select v-model="searchType" placeholder="全部" clearable class="search-select mr-5">
             <el-option label="HTTP请求" value="HTTP_REQUEST" />
             <el-option label="外部API" value="EXTERNAL_API" />
             <el-option label="业务日志" value="BUSINESS" />
@@ -42,7 +42,8 @@
             </el-table-column>
             <el-table-column prop="level" label="级别" width="90">
                 <template #default="{ row }">
-                    <el-tag :type="row.level === 'ERROR' ? 'danger' : row.level === 'WARN' ? 'warning' : 'info'" size="small">
+                    <el-tag :type="row.level === 'ERROR' ? 'danger' : row.level === 'WARN' ? 'warning' : 'info'"
+                        size="small">
                         {{ row.level }}
                     </el-tag>
                 </template>
@@ -118,7 +119,7 @@ const clearLogs = () => {
                 showMessage(e.message, 'warning')
             }
         })
-    }).catch(() => {})
+    }).catch(() => { })
 }
 
 const tableLoading = ref(false)
@@ -135,16 +136,16 @@ function getTableData() {
         level: searchLevel.value,
         type: searchType.value
     })
-    .then((res) => {
-        if (res.success == true) {
-            tableData.value = res.data.records
-            current.value = res.data.current
-            total.value = res.data.total
-            size.value = res.data.size
-        }
-    }).finally(() => {
-        tableLoading.value = false
-    })
+        .then((res) => {
+            if (res.success == true) {
+                tableData.value = res.data.records
+                current.value = res.data.current
+                total.value = res.data.total
+                size.value = res.data.size
+            }
+        }).finally(() => {
+            tableLoading.value = false
+        })
 }
 getTableData()
 
@@ -155,7 +156,7 @@ const handleSizeChange = (e) => {
 </script>
 
 <style scoped>
-.el-input, .el-select {
-    width: auto;
+.search-select {
+    --el-select-width: 140px;
 }
 </style>
