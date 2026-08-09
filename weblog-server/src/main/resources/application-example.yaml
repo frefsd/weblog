@@ -19,7 +19,7 @@ spring:
       minimum-idle: 5            # 最小空闲连接数 (即使没人用，也保持5个连接 ready，提高响应速度)
 
   profiles:
-    include: local   # 本地开发环境设为 local 生产环境设为 druid
+    active: local   # 本地开发环境设为 local 生产环境设为 druid
 
 mybatis-plus:
   configuration:
