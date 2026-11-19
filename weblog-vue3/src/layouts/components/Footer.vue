@@ -6,7 +6,8 @@
 
                 <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank"
                     class="mr-4 hover:underline md:mr-6">
-                    京ICP备04000001号-2 </a>
+                    皖ICP备2026016086号-1
+                </a>
                 <a href="https://beian.mps.gov.cn/#/query/webSearch?code=34162102003429" rel="noreferrer"
                     target="_blank">
                     <img src="@/assets/beian.png" class="inline-block w-4 h-4 mr-1 align-text-bottom" />
