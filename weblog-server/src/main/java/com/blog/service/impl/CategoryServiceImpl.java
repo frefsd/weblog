@@ -95,23 +95,16 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
         long current = dto.getCurrent();
         long size = dto.getSize();
-        long offset = (current - 1) * size;
 
         LambdaQueryWrapper<Category> base = new LambdaQueryWrapper<Category>()
                 .eq(Category::getIsDeleted, 0)
                 .like(categoryName != null && !categoryName.trim().isEmpty(), Category::getName, categoryName.trim())
                 .ge(start != null, Category::getCreateTime, start)
-                .le(end != null, Category::getCreateTime, end);
+                .le(end != null, Category::getCreateTime, end)
+                .orderByDesc(Category::getCreateTime);
 
-        long total = this.count(base);
-        List<Category> records = total == 0
-                ? List.of()
-                : this.list(base.orderByDesc(Category::getCreateTime).last("LIMIT " + offset + "," + size));
-
-        Page<Category> page = new Page<>(current, size);
-        page.setTotal(total);
-        page.setRecords(records);
-        return page;
+        // 分页交给 PaginationInnerInterceptor，避免手工拼接 LIMIT
+        return this.page(new Page<>(current, size), base);
     }
 
     /**

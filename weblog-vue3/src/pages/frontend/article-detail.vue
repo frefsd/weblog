@@ -177,6 +177,7 @@ import { ref, reactive, computed } from 'vue'
 import { getCategories } from '@/api/frontend/category'
 import { getTags } from '@/api/frontend/tag'
 import MarkdownIt from 'markdown-it'
+import DOMPurify from 'dompurify'
 
 const router = useRouter()
 const route = useRoute()
@@ -225,7 +226,9 @@ const article = reactive({
 
 // 计算属性：将 Markdown 转换为 HTML
 const renderedContent = computed(() => {
-    return md.render(article.content || '')
+    // markdown-it 开启了 html: true，必须消毒后再交给 v-html，否则文章内容里的
+    // <img onerror> 之类会直接对访客执行（存储型 XSS）
+    return DOMPurify.sanitize(md.render(article.content || ''), { USE_PROFILES: { html: true } })
 })
 
 function queryArticleDetail(articleId) {

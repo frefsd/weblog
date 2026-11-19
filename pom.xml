@@ -52,6 +52,12 @@
                 <artifactId>mybatis-plus-core</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
+            <!-- MyBatis-Plus 3.5.9+ 分页插件（PaginationInnerInterceptor）已拆分到独立模块 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
             <!-- springdoc-openapi-->
             <dependency>
                 <groupId>org.springdoc</groupId>

@@ -119,6 +119,7 @@ import Header from '@/layouts/components/Header.vue'
 import Footer from '@/layouts/components/Footer.vue'
 import { sendChatMessageStreamText, validateSession, getChatHistory } from '@/api/frontend/chat'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 // 配置 marked Markdown 渲染器
 marked.setOptions({
@@ -162,6 +163,12 @@ function setSessionId(id) {
 // 组件卸载时清理
 onUnmounted(() => {
     stopCompletionPolling()
+    // 中止未完成的流式请求：否则离开页面后 fetch 仍持续接收 token，
+    // 并不断写入已卸载组件的 DOM 引用
+    if (abortController) {
+        abortController.abort()
+        abortController = null
+    }
 })
 
 // 挂载时从后端校验 session 并加载聊天记录
@@ -245,7 +252,8 @@ function scrollToBottom() {
 // ---- Markdown 渲染 ----
 function renderMarkdown(text) {
     if (!text) return ''
-    return marked.parse(text)
+    // AI 回复里可能带出 RAG 检索到的文章片段，必须消毒后再渲染
+    return DOMPurify.sanitize(marked.parse(text))
 }
 
 // ---- 后台流完成轮询检测（保留但简化：不再依赖 localStorage） ----

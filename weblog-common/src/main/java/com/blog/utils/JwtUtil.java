@@ -27,7 +27,12 @@ public class JwtUtil {
     @PostConstruct
     public void init() {
         if (secret == null || secret.trim().isEmpty()) {
-            log.error("JWT secret为空，请检查配置");
+            // 之前只打日志：应用能启动，等第一个登录请求才 500，问题被推迟到运行时
+            throw new IllegalStateException("JWT secret 未配置，请在 application-*.yaml 中设置 jwt.secret");
+        }
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            // HS256 要求密钥至少 256 bit，否则启动后首次签发 Token 会抛 WeakKeyException
+            throw new IllegalStateException("JWT secret 长度不足 32 字节，无法用于 HS256 签名");
         }
     }
 

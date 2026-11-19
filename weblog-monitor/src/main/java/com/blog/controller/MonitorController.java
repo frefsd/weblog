@@ -45,7 +45,7 @@ public class MonitorController {
     @Operation(summary = "分页查询日志")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/log/page")
-    public Result<PageResult<LogRecord>> logPage(@RequestBody LogSearchDTO dto) {
+    public Result<PageResult<LogRecord>> logPage(@Valid @RequestBody LogSearchDTO dto) {
         return Result.page(monitorLogService.page(dto));
     }
 

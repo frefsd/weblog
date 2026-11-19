@@ -54,8 +54,12 @@
     <!-- 修改密码 -->
     <el-dialog v-model="dialogShow" title="修改密码" width="30%" :show-close="false">
         <el-form ref="formRef" :rules="rules" :model="form" autocomplete="new-password">
-            <el-form-item label="用户名" prop="oldPassword" label-width="120px">
+            <el-form-item label="用户名" prop="username" label-width="120px">
                 <el-input v-model="form.username" disabled name="username-disabled" />
+            </el-form-item>
+            <el-form-item label="当前密码" prop="oldPassword" label-width="120px">
+                <el-input v-model="form.oldPassword" type="password" autocomplete="current-password"
+                    name="old-password-field" placeholder="请输入当前密码" show-password />
             </el-form-item>
             <el-form-item label="新密码" prop="newPassword" label-width="120px">
                 <el-input v-model="form.newPassword" type="password" autocomplete="new-password"
@@ -97,6 +101,7 @@ const dialogShow = ref(false)
 
 const form = reactive({
     username: store.state.user.username,
+    oldPassword: '',
     newPassword: '',
     rePassword: '',
 })
@@ -108,6 +113,13 @@ const rules = {
             message: '用户名不能为空',
             trigger: 'blur'
         }
+    ],
+    oldPassword: [
+        {
+            required: true,
+            message: '请输入当前密码',
+            trigger: 'blur',
+        },
     ],
     newPassword: [
         {
@@ -164,6 +176,7 @@ const handleCommand = (e) => {
     console.log(e)
     switch (e) {
         case 'updatePassword':
+            form.oldPassword = ''
             form.newPassword = ''
             form.rePassword = ''
             if (formRef.value) {

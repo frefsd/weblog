@@ -98,23 +98,16 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements ITagS
 
         long current = dto.getCurrent();
         long size = dto.getSize();
-        long offset = (current - 1) * size;
 
         LambdaQueryWrapper<Tag> base = new LambdaQueryWrapper<Tag>()
                 .eq(Tag::getIsDeleted, 0)
                 .like(tagName != null && !tagName.trim().isEmpty(), Tag::getName, tagName.trim())
                 .ge(start != null, Tag::getCreateTime, start)
-                .le(end != null, Tag::getCreateTime, end);
+                .le(end != null, Tag::getCreateTime, end)
+                .orderByDesc(Tag::getCreateTime);
 
-        long total = this.count(base);
-        List<Tag> records = total == 0
-                ? List.of()
-                : this.list(base.orderByDesc(Tag::getCreateTime).last("LIMIT " + offset + "," + size));
-
-        Page<Tag> page = new Page<>(current, size);
-        page.setTotal(total);
-        page.setRecords(records);
-        return page;
+        // 分页交给 PaginationInnerInterceptor，避免手工拼接 LIMIT
+        return this.page(new Page<>(current, size), base);
     }
 
     /**

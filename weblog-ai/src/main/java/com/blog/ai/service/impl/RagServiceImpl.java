@@ -16,10 +16,26 @@ import org.springframework.web.client.RestClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * RAG 索引服务实现。
+ *
+ * <p><b>并发说明（原实现的问题与修复）：</b>原先把 6 个方法全部 {@code synchronized}，
+ * 导致 embedding HTTP 调用和全量 JSON 落盘期间，所有 AI 问答检索请求排队等待。
+ * 现在改为：</p>
+ * <ul>
+ *   <li>底层存储使用 {@link java.util.concurrent.CopyOnWriteArrayList}，检索无锁；</li>
+ *   <li>全量重建通过 {@code replaceAll} 原子切换，不阻塞查询；</li>
+ *   <li>落盘使用快照 + 独立的 {@code persistLock}，不与检索共享锁；</li>
+ *   <li>索引构建本身由 {@code aiTaskExecutor} 单线程串行执行，无需再加全局锁。</li>
+ * </ul>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,6 +47,9 @@ public class RagServiceImpl implements RagService {
     private final RestClient.Builder restClientBuilder;
 
     private static final String STORE_FILE = System.getProperty("user.dir") + "/data/embedding-store.json";
+
+    /** 只用于串行化文件写入，避免多线程同时写同一个文件把 JSON 写坏 */
+    private final Object persistLock = new Object();
 
     /** 复用的 RestClient 实例，避免每次 API 调用都新建连接 */
     private RestClient restClient;
@@ -49,41 +68,43 @@ public class RagServiceImpl implements RagService {
     }
 
     @Override
-    public synchronized void rebuildIndex(List<ArticleDocument> articles) {
-        embeddingStore.clear();
-        int totalChunks = 0;
+    public void rebuildIndex(List<ArticleDocument> articles) {
+        List<InMemoryEmbeddingStore.Entry> allEntries = new ArrayList<>();
         for (ArticleDocument doc : articles) {
-            totalChunks += indexDocument(doc.getId(), doc.getTitle(), doc.getContent());
+            allEntries.addAll(buildEntries(doc.getId(), doc.getTitle(), doc.getContent()));
         }
+        // 原子替换：重建过程中查询方仍然看到完整的旧索引
+        embeddingStore.replaceAll(allEntries);
         persist();
-        log.info("向量索引重建完成: {} 篇文章, {} 个文本块", articles.size(), totalChunks);
+        log.info("向量索引重建完成: {} 篇文章, {} 个文本块", articles.size(), allEntries.size());
     }
 
     @Override
-    public synchronized void addDocument(Long articleId, String title, String content) {
+    public void addDocument(Long articleId, String title, String content) {
         int chunks = indexDocument(articleId, title, content);
         persist();
         log.info("新增文章索引: articleId={}, chunks={}", articleId, chunks);
     }
 
     @Override
-    public synchronized void updateDocument(Long articleId, String title, String content) {
-        // 先删除旧条目，再添加新条目（removeByArticleId 物理删除，不依赖 transient 标记）
-        embeddingStore.removeByArticleId(articleId);
-        int chunks = indexDocument(articleId, title, content);
+    public void updateDocument(Long articleId, String title, String content) {
+        // 先把 embedding 全部算完（N 次外网 HTTP），再一次性原子替换。
+        // 不能"先删旧条目、再逐块调接口添加"——那段时间内检索该文章会返回空结果。
+        List<InMemoryEmbeddingStore.Entry> entries = buildEntries(articleId, title, content);
+        embeddingStore.replaceByArticleId(articleId, entries);
         persist();
-        log.info("更新文章索引: articleId={}, chunks={}", articleId, chunks);
+        log.info("更新文章索引: articleId={}, chunks={}", articleId, entries.size());
     }
 
     @Override
-    public synchronized void removeDocument(Long articleId) {
+    public void removeDocument(Long articleId) {
         embeddingStore.removeByArticleId(articleId);
         persist();
         log.info("删除文章索引: articleId={}", articleId);
     }
 
     @Override
-    public synchronized List<SearchResult> search(String query, int topK) {
+    public List<SearchResult> search(String query, int topK) {
         float[] queryEmbedding = embed(query);
         if (queryEmbedding == null) {
             log.warn("查询向量化失败: {}", query);
@@ -101,36 +122,66 @@ public class RagServiceImpl implements RagService {
     }
 
     @Override
-    public synchronized void persist() {
-        try {
+    public void persist() {
+        // 先在无锁状态下取快照，再串行写盘：写文件不再阻塞检索
+        InMemoryEmbeddingStore snapshot = embeddingStore.snapshot();
+        synchronized (persistLock) {
             File file = new File(STORE_FILE);
-            file.getParentFile().mkdirs();
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, embeddingStore);
-            log.debug("向量存储已持久化: {} 条记录", embeddingStore.entryCount());
-        } catch (IOException e) {
-            log.error("向量存储持久化失败: {}", e.getMessage(), e);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            // 先写临时文件再原子改名：进程被 kill 时不会留下半个 JSON，
+            // 否则下次启动 AiConfig 读失败会静默丢弃整个索引
+            File tmp = new File(STORE_FILE + ".tmp");
+            try {
+                objectMapper.writerWithDefaultPrettyPrinter().writeValue(tmp, snapshot);
+                try {
+                    Files.move(tmp.toPath(), file.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                } catch (AtomicMoveNotSupportedException e) {
+                    Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+                log.debug("向量存储已持久化: {} 条记录", snapshot.entryCount());
+            } catch (IOException e) {
+                log.error("向量存储持久化失败: {}", e.getMessage(), e);
+                if (tmp.exists() && !tmp.delete()) {
+                    log.warn("临时索引文件清理失败: {}", tmp.getAbsolutePath());
+                }
+            }
         }
     }
 
     /**
-     * 对一篇文章进行分块 + 向量化 + 存入 store
-     * @return 文本块数量
+     * 对一篇文章进行分块 + 向量化 + 存入 store（增量场景）。
+     *
+     * @return 成功入库的文本块数量
      */
     private int indexDocument(Long articleId, String title, String content) {
+        List<InMemoryEmbeddingStore.Entry> entries = buildEntries(articleId, title, content);
+        for (InMemoryEmbeddingStore.Entry entry : entries) {
+            embeddingStore.add(entry.getText(), entry.getEmbedding(), entry.getArticleId(), entry.getArticleTitle());
+        }
+        return entries.size();
+    }
+
+    /**
+     * 分块 + 向量化，只构造条目不写入存储（供全量重建批量替换使用）。
+     */
+    private List<InMemoryEmbeddingStore.Entry> buildEntries(Long articleId, String title, String content) {
         String fullText = title + "\n" + (content != null ? content : "");
         List<String> chunks = TextSplitter.split(fullText,
                 aiProperties.getEmbedding().getChunkSize(),
                 aiProperties.getEmbedding().getChunkOverlap());
 
-        int successCount = 0;
+        List<InMemoryEmbeddingStore.Entry> entries = new ArrayList<>(chunks.size());
         for (String chunk : chunks) {
             float[] embedding = embedSingle(chunk);
             if (embedding != null) {
-                embeddingStore.add(chunk, embedding, articleId, title);
-                successCount++;
+                entries.add(InMemoryEmbeddingStore.buildEntry(chunk, embedding, articleId, title));
             }
         }
-        return successCount;
+        return entries;
     }
 
     /**

@@ -22,6 +22,11 @@
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus.version}</version>
         </dependency>
+        <!-- 分页插件（3.5.9+ 拆分为独立模块，缺失时分页不生效、会全表加载） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+        </dependency>
         <!--  lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

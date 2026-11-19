@@ -7,6 +7,12 @@ import lombok.Data;
 @Data
 public class UpdatePasswordDTO {
     /**
+     * 当前密码（用于二次确认身份，防止 Token 被盗后直接改密）
+     */
+    @NotBlank(message = "当前密码不能为空")
+    private String oldPassword;
+
+    /**
      * 设置新密码
      */
     @NotBlank(message = "新密码不能为空")

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,6 +29,14 @@ public class VectorIndexInitializer {
     private final ArticleDataProvider articleDataProvider;
     private final RagService ragService;
 
+    /**
+     * 启动后异步重建索引。
+     *
+     * <p>之前同步执行：首次部署（或 data 目录被清空）时，全量重建要串行调用
+     * 数百次 embedding 接口，启动阶段长时间不可用。异步后启动立即完成，
+     * 索引在后台补齐。</p>
+     */
+    @Async("aiTaskExecutor")
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         if (embeddingStore.entryCount() > 0) {

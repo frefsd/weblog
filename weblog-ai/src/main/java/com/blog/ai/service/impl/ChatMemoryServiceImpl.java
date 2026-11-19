@@ -58,13 +58,20 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
         return records;
     }
 
+    /** 单次最多返回的历史条数，防止超长会话把整张表的历史记录一次拉进内存 */
+    private static final int MAX_HISTORY_ROWS = 200;
+
     @Override
     public List<AiChatMemory> getChatHistory(String sessionId) {
-        return chatMemoryMapper.selectList(
+        List<AiChatMemory> records = chatMemoryMapper.selectList(
                 new LambdaQueryWrapper<AiChatMemory>()
                         .eq(AiChatMemory::getSessionId, sessionId)
-                        .orderByAsc(AiChatMemory::getCreateTime)
+                        .orderByDesc(AiChatMemory::getCreateTime)
+                        .last("LIMIT " + MAX_HISTORY_ROWS)
         );
+        // 取最近 N 条后翻转成正序
+        Collections.reverse(records);
+        return records;
     }
 
     @Override

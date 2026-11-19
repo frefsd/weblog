@@ -2,6 +2,7 @@ package com.blog.aspect;
 
 import com.blog.entity.LogRecord;
 import com.blog.LogEvent;
+import com.blog.utils.IpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,11 +72,7 @@ public class ControllerMonitorAspect {
     }
 
     private String getClientIp() {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank()) {
-            ip = request.getRemoteAddr();
-        }
-        return ip;
+        return IpUtil.getClientIp(request);
     }
 
     private String getStackTrace(Throwable e) {

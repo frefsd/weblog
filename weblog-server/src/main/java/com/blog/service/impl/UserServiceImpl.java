@@ -71,12 +71,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             throw new BusinessException("用户数据异常");
         }
 
-        // 2. 业务逻辑：防止新密码与旧密码相同
+        // 2. 校验当前密码：防止 Token 被盗后攻击者直接改密接管账号
+        if (!passwordEncoder.matches(request.getOldPassword(), realUser.getPassword())) {
+            throw new BusinessException("当前密码不正确");
+        }
+
+        // 3. 业务逻辑：防止新密码与旧密码相同
         if (passwordEncoder.matches(request.getNewPassword(), realUser.getPassword())) {
             throw new BusinessException("新密码不能与旧密码相同");
         }
 
-        // 3. 加密并更新
+        // 4. 加密并更新
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         realUser.setPassword(encodedPassword);
 

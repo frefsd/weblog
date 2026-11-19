@@ -14,11 +14,16 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, onBeforeUnmount } from 'vue';
 import * as echarts from 'echarts';
 import { getDashboardPublishArticleStatisticsInfo } from '@/api/admin/dashboard'
 
 var myChart = null
+
+// 必须用同一个函数引用注册与移除，匿名函数无法 removeEventListener
+const handleResize = () => {
+    myChart && myChart.resize()
+}
 
 onMounted(() => {
     getDashboardPublishArticleStatisticsInfo().then((e) => {
@@ -81,8 +86,14 @@ onMounted(() => {
     })
 
     // 窗口大小变化时重新渲染
-    window.addEventListener('resize', () => {
-        myChart && myChart.resize();
-    });
+    window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', handleResize)
+    if (myChart) {
+        myChart.dispose()
+        myChart = null
+    }
 })
 </script>

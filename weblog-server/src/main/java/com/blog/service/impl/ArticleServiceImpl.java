@@ -124,7 +124,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public IPage<Article> getArticlePageList(ArticlePageDTO query) {
         long current = query.getCurrent();
         long size = query.getSize();
-        long offset = (current - 1) * size;
 
         LocalDateTime start = parseFrontendDateTime(query.getStartDate());
         LocalDateTime end = parseFrontendDateTime(query.getEndDate());
@@ -138,15 +137,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
 
-        long total = this.count(base);
-        List<Article> records = total == 0
-                ? List.of()
-                : this.list(base.orderByDesc(Article::getCreateTime).last("LIMIT " + offset + "," + size));
-
-        Page<Article> page = new Page<>(current, size);
-        page.setTotal(total);
-        page.setRecords(records);
-        return page;
+        // 分页交给 PaginationInnerInterceptor，避免手工拼接 LIMIT
+        return this.page(new Page<>(current, size), base);
     }
 
     private Tag getOrCreateTagByName(String name) {
@@ -359,7 +351,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public IPage<ArticleIndexVO> getArticleIndexPage(ArticlePageDTO query) {
         long current = query.getCurrent();
         long size = query.getSize();
-        long offset = (current - 1) * size;
 
         // 查询文章列表
         LambdaQueryWrapper<Article> base = new LambdaQueryWrapper<Article>()
@@ -367,18 +358,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
 
-        long total = this.count(base);
-        List<Article> articleList = total == 0
-                ? List.of()
-                : this.list(base.last("LIMIT " + offset + "," + size));
+        // 分页交给 PaginationInnerInterceptor
+        Page<Article> articlePage = this.page(new Page<>(current, size), base);
 
         // 转换为 VO
-        List<ArticleIndexVO> voList = articleList.stream()
+        List<ArticleIndexVO> voList = articlePage.getRecords().stream()
                 .map(this::convertToArticleIndexVO)
                 .collect(Collectors.toList());
 
         Page<ArticleIndexVO> page = new Page<>(current, size);
-        page.setTotal(total);
+        page.setTotal(articlePage.getTotal());
         page.setRecords(voList);
         return page;
     }
@@ -531,7 +520,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
         
-        log.info("查询条件: {}", queryWrapper.getCustomSqlSegment());
+        log.debug("查询条件: {}", queryWrapper.getCustomSqlSegment());
         
         // 使用分页插件
         Page<Article> pageParam = new Page<>(current, size);
@@ -575,7 +564,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public IPage<ArticleIndexVO> getArticlesByCategoryId(Long categoryId, ArticlePageDTO query) {
         long current = query.getCurrent();
         long size = query.getSize();
-        long offset = (current - 1) * size;
 
         LambdaQueryWrapper<Article> base = new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDeleted, 0)
@@ -607,7 +595,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public IPage<ArticleIndexVO> getArticlesByTagId(Long tagId, ArticlePageDTO query) {
         long current = query.getCurrent();
         long size = query.getSize();
-        long offset = (current - 1) * size;
 
         // 查询文章列表
         LambdaQueryWrapper<Article> base = new LambdaQueryWrapper<Article>()
@@ -616,10 +603,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
 
-        long total = this.count(base);
-        List<Article> articleList = total == 0
-                ? List.of()
-                : this.list(base.last("LIMIT " + offset + "," + size));
+        // 分页交给 PaginationInnerInterceptor
+        Page<Article> articlePage = this.page(new Page<>(current, size), base);
+        List<Article> articleList = articlePage.getRecords();
+        long total = articlePage.getTotal();
 
         // 转换为 VO
         List<ArticleIndexVO> voList = articleList.stream()

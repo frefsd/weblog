@@ -33,6 +33,7 @@ public class AdminArticleController {
      * 获取文章详情
      */
     @Operation(summary = "获取文章详情")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/detail")
     public Result<ArticleDetailVO> getArticleDetailForAdmin(@Valid @RequestBody ArticleDetailDTO query) {
         ArticleDetailVO detail = articleService.getArticleDetailForAdmin(query);
@@ -60,6 +61,7 @@ public class AdminArticleController {
      * @return
      */
     @Operation(summary = "分页查询")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/list")
     public Result<PageResult<Article>> getArticlePageList(@Valid @RequestBody ArticlePageDTO query) {
         IPage<Article> page = articleService.getArticlePageList(query);
