@@ -1,118 +1,5 @@
-<template>
-    <Header></Header>
-
-    <main class="flex flex-col" style="height: calc(100vh - 65px);">
-        <!-- ========== 欢迎区（无对话时展示） ========== -->
-        <div v-if="messages.length === 0"
-            class="flex flex-col items-center justify-center flex-1 px-4 md:px-4 text-center">
-            <div
-                class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-3xl md:text-4xl mb-4 shadow-lg shadow-blue-500/25">
-                🤖
-            </div>
-            <h1 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">你好，我是小智</h1>
-            <p class="text-gray-500 dark:text-gray-400 max-w-md text-xs md:text-sm">
-                我是 WeBlog 的 AI 助手，基于博客内容回答你的问题。试着问我任何技术问题吧！
-            </p>
-            <div class="flex flex-wrap justify-center gap-2 mt-6 max-w-lg">
-                <button v-for="q in suggestedQuestions" :key="q"
-                    class="text-xs px-3 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
-                    @click="handleSuggested(q)">
-                    {{ q }}
-                </button>
-            </div>
-        </div>
-
-        <!-- ========== 消息区（有对话时展示） ========== -->
-        <div v-else ref="messageAreaRef"
-            class="flex-1 overflow-y-auto px-3 md:px-4 py-4 md:py-6 space-y-4 max-w-3xl mx-auto w-full message-area">
-            <div v-for="(msg, idx) in messages" :key="idx" class="flex items-start gap-3"
-                :class="msg.isUser ? 'justify-end' : ''">
-                <!-- 消息气泡 -->
-                <div :class="[
-                    msg.isUser
-                        ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-black dark:text-gray-100 rounded-2xl rounded-tr-sm'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-tl-sm',
-                    'px-4 py-3 shadow-sm bubble-max'
-                ]">
-                    <!-- 错误消息 -->
-                    <p v-if="msg.isError" class="text-sm leading-relaxed text-red-500 dark:text-red-400">
-                        {{ msg.content }}
-                    </p>
-                    <!-- AI 消息：流式过程中直接 innerHTML 渲染 Markdown，完成后用 Vue v-html -->
-                    <div v-else-if="!msg.isUser" class="text-sm leading-relaxed">
-                        <div v-if="msg.isStreaming" :ref="(el) => setStreamingRef(el, msg)" class="markdown-body"></div>
-                        <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
-                    </div>
-                    <!-- 用户消息：纯文本 -->
-                    <p v-else class="text-sm leading-relaxed whitespace-pre-wrap">{{ msg.content }}</p>
-
-                    <!-- 流式输出光标：动态跳动黑点 -->
-                    <div v-if="msg.isStreaming" class="inline-flex items-center gap-1 ml-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-gray-600 dark:bg-gray-300 animate-bounce-sm"
-                            style="animation-delay:0ms"></span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-gray-600 dark:bg-gray-300 animate-bounce-sm"
-                            style="animation-delay:150ms"></span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-gray-600 dark:bg-gray-300 animate-bounce-sm"
-                            style="animation-delay:300ms"></span>
-                    </div>
-
-                    <!-- 引用来源 -->
-                    <div v-if="msg.sources && msg.sources.length > 0"
-                        class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-1.5">📎 参考来源</div>
-                        <div v-for="(src, si) in msg.sources" :key="si"
-                            class="mt-1.5 p-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg text-xs flex items-center gap-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                            @click="goArticle(src.articleId)">
-                            <span class="text-blue-700 dark:text-blue-300 font-medium truncate">{{ src.articleTitle
-                            }}</span>
-                            <span class="text-gray-400 ml-auto flex-shrink-0">→</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 用户头像（右侧） -->
-                <div v-if="msg.isUser"
-                    class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 flex items-center justify-center text-sm text-white order-1">
-                    U
-                </div>
-            </div>
-        </div>
-
-        <!-- ========== 底部输入区 ========== -->
-        <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 md:px-4 py-2 md:py-3">
-            <div class="max-w-3xl mx-auto">
-                <div class="flex items-end gap-2 md:gap-2.5">
-                    <textarea ref="textareaRef" v-model="inputText" :disabled="isStreaming" rows="1" maxlength="200"
-                        class="flex-1 resize-none border-2 border-gray-300 dark:border-gray-500 rounded-2xl px-4 py-3 text-base md:text-lg bg-white dark:bg-gray-700 text-black dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 scrollbar-hide"
-                        :placeholder="isStreaming ? '小智正在思考...' : '输入你的问题...'"
-                        style="min-height: 48px; max-height: 140px;" @input="onInput" @keydown="onKeydown"></textarea>
-                    <!-- 发送 / 停止按钮 -->
-                    <button v-if="!isStreaming" :disabled="!inputText.trim()" @click="sendMessage()"
-                        class="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all"
-                        :class="inputText.trim()
-                            ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300'
-                            : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'">
-                        <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 19V5M5 12l7-7 7 7" />
-                        </svg>
-                    </button>
-                    <button v-else @click="stopStreaming()"
-                        class="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <rect x="6" y="6" width="12" height="12" rx="1" />
-                        </svg>
-                    </button>
-                </div>
-                <span class="text-2xs md:text-xs text-gray-400 mt-1 block text-right">{{ inputText.length }}/200</span>
-            </div>
-        </div>
-    </main>
-
-    <Footer></Footer>
-</template>
-
 <script setup>
+import { ArrowUpIcon, ArrowUpRightIcon, CpuChipIcon, SparklesIcon, StopIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
 import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '@/layouts/components/Header.vue'
@@ -213,7 +100,7 @@ function onInput() {
 
 // ---- 键盘事件：Enter 发送，Shift+Enter 换行 ----
 function onKeydown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault()
         if (!isStreaming.value && inputText.value.trim()) {
             sendMessage()
@@ -415,187 +302,186 @@ function stopStreaming() {
 }
 </script>
 
+<template>
+    <Header />
+    <main class="site-width site-page chat-page">
+        <section class="wb-panel chat-shell" aria-labelledby="chat-title">
+            <header class="chat-header">
+                <span class="chat-icon"><CpuChipIcon aria-hidden="true" /></span>
+                <div>
+                    <h1 id="chat-title">小智</h1>
+                    <p>基于博客内容的 AI 助手</p>
+                </div>
+            </header>
+            <div v-if="!messages.length" class="chat-welcome">
+                <span class="welcome-icon" aria-hidden="true"><SparklesIcon /></span>
+                <h2>今天想了解什么？</h2>
+                <div class="chat-suggestions" aria-label="推荐问题">
+                    <button v-for="question in suggestedQuestions" :key="question" type="button" class="wb-chip" @click="handleSuggested(question)">
+                        {{ question }} <ArrowUpRightIcon aria-hidden="true" />
+                    </button>
+                </div>
+            </div>
+
+            <div v-else ref="messageAreaRef" class="chat-messages" aria-label="对话记录">
+                <div v-for="(msg, index) in messages" :key="index" class="chat-row" :class="{ 'is-user': msg.isUser }">
+                    <span class="message-icon" aria-hidden="true">
+                        <UserCircleIcon v-if="msg.isUser" />
+                        <CpuChipIcon v-else />
+                    </span>
+                    <div class="chat-bubble" :class="{ 'is-error': msg.isError }">
+                        <p v-if="msg.isError || msg.isUser" class="plain-message">{{ msg.content }}</p>
+                        <div v-else-if="msg.isStreaming" :ref="el => setStreamingRef(el, msg)" class="markdown-body"></div>
+                        <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+
+                        <div v-if="msg.isStreaming" class="typing-indicator" role="status" aria-label="小智正在回答">
+                            <i></i><i></i><i></i>
+                        </div>
+
+                        <div v-if="msg.sources?.length" class="message-sources">
+                            <span>参考文章</span>
+                            <button v-for="(source, sourceIndex) in msg.sources" :key="sourceIndex" type="button" class="wb-chip" @click="goArticle(source.articleId)">
+                                {{ source.articleTitle }} <ArrowUpRightIcon aria-hidden="true" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form class="chat-composer" @submit.prevent="sendMessage">
+                <div class="composer-row">
+                    <textarea
+                        ref="textareaRef"
+                        v-model="inputText"
+                        aria-label="输入你的问题"
+                        :placeholder="isStreaming ? '小智正在回答…' : '输入你的问题…'"
+                        :disabled="isStreaming"
+                        rows="1"
+                        maxlength="200"
+                        @input="onInput"
+                        @keydown="onKeydown"
+                    ></textarea>
+                    <button v-if="!isStreaming" type="submit" class="wb-action wb-action--primary send-message" aria-label="发送问题" :disabled="!inputText.trim()">
+                        <ArrowUpIcon aria-hidden="true" />
+                    </button>
+                    <button v-else type="button" class="wb-icon-button send-message" aria-label="停止生成" @click="stopStreaming">
+                        <StopIcon aria-hidden="true" />
+                    </button>
+                </div>
+                <div class="composer-details">
+                    <span class="keyboard-hint">Enter 发送 · Shift + Enter 换行</span>
+                    <span class="character-count">{{ inputText.length }}/200</span>
+                </div>
+            </form>
+        </section>
+    </main>
+    <Footer />
+</template>
+
 <style scoped>
-/* 隐藏消息区滚动条，但保持可滚动 */
-.message-area::-webkit-scrollbar {
-    display: none;
+.chat-page { max-width: 1060px; padding-block: clamp(14px, 3vw, 34px); }
+.chat-shell {
+    display: flex;
+    flex-direction: column;
+    height: clamp(550px, calc(100dvh - 148px), 870px);
+    overflow: hidden;
+    box-shadow: var(--wb-shadow);
 }
-
-.message-area {
-    scrollbar-width: none;
+.chat-header {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    padding: 14px clamp(13px, 2.6vw, 27px);
+    border-bottom: 1px solid var(--wb-line);
 }
-
-/* 隐藏输入框滚动条 */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
+.chat-header h1 { font: 720 1.1rem/1.25 var(--wb-display); }
+.chat-header p { color: var(--wb-muted); font-size: 0.78rem; }
+.chat-icon,
+.welcome-icon,
+.message-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    color: var(--wb-cyan);
+    background: var(--wb-cyan-soft);
+    border: 1px solid color-mix(in srgb, var(--wb-cyan) 35%, var(--wb-line));
+    border-radius: 7px;
 }
+.chat-icon { width: 42px; height: 42px; }
+.chat-icon svg { width: 22px; height: 22px; }
 
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+.chat-welcome,
+.chat-messages {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(12px, 3vw, 26px);
+    background:
+        linear-gradient(var(--wb-grid) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(90deg, var(--wb-grid) 1px, transparent 1px) 0 0 / 34px 34px,
+        radial-gradient(ellipse at 45% 10%, var(--wb-cyan-soft), transparent 55%),
+        var(--wb-bg);
 }
+.chat-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 15px; overflow-y: auto; }
+.welcome-icon { width: 54px; height: 54px; }
+.welcome-icon svg { width: 27px; height: 27px; }
+.chat-welcome h2 { font: 720 clamp(1.45rem, 4vw, 2.25rem)/1.35 var(--wb-display); }
+.chat-suggestions { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; max-width: 536px; }
+.chat-suggestions button,
+.message-sources button { gap: 6px; text-align: left; }
+.chat-suggestions svg,
+.message-sources svg { width: 13px; height: 13px; flex: none; color: var(--wb-cyan); }
 
-/* 小幅度弹跳动画（原 animate-bounce 幅度太大） */
-@keyframes bounce-sm {
+.chat-messages { overflow-y: auto; overscroll-behavior: contain; }
+.chat-row { display: flex; gap: 8px; align-items: start; margin-bottom: 12px; }
+.chat-row.is-user { flex-direction: row-reverse; }
+.message-icon { width: 31px; height: 31px; }
+.message-icon svg { width: 16px; height: 16px; }
+.is-user .message-icon { background: var(--wb-accent-soft); color: var(--wb-accent); border-color: var(--wb-line); }
+.chat-bubble { max-width: min(82%, 680px); min-width: 0; padding: 10px 13px; border: 1px solid var(--wb-line); border-radius: 0 8px 8px; background: var(--wb-panel); overflow-wrap: anywhere; font-size: 0.93rem; }
+.is-user .chat-bubble { border-radius: 8px 0 8px 8px; background: var(--wb-accent-soft); }
+.chat-bubble.is-error { border-color: var(--el-color-danger); }
+.plain-message { white-space: pre-wrap; }
 
-    0%,
-    100% {
-        transform: translateY(0);
-    }
+.typing-indicator { display: inline-flex; gap: 4px; align-items: center; min-height: 16px; }
+.typing-indicator i { width: 4px; height: 4px; background: var(--wb-cyan); border-radius: 50%; animation: chat-pulse 820ms ease-in-out infinite alternate; }
+.typing-indicator i:nth-child(2) { animation-delay: 120ms; }
+.typing-indicator i:nth-child(3) { animation-delay: 240ms; }
+@keyframes chat-pulse { from { opacity: 0.4; } to { opacity: 1; } }
 
-    50% {
-        transform: translateY(-4px);
-    }
+.message-sources { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--wb-line); }
+.message-sources > span { color: var(--wb-muted); font-size: 0.78rem; }
+.chat-composer { flex: none; padding: 12px clamp(12px, 2.7vw, 25px) 8px; border-top: 1px solid var(--wb-line); }
+.composer-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.composer-row textarea { width: 100%; resize: none; min-height: 46px; max-height: 120px; padding: 9px 11px; border: 1px solid var(--wb-line); border-radius: 6px; color: var(--wb-text); background: var(--wb-bg); }
+.composer-row textarea::placeholder { color: var(--wb-dim); }
+.composer-row textarea:focus-visible { outline-offset: 1px; }
+.send-message { width: 46px; min-height: 46px; padding: 0; }
+.send-message:disabled { background: var(--wb-raised); border-color: var(--wb-line); color: var(--wb-dim); cursor: not-allowed; }
+.composer-details { display: flex; justify-content: flex-end; gap: 10px; color: var(--wb-dim); padding-top: 5px; font-size: 0.75rem; }
+.character-count { font-variant-numeric: tabular-nums; }
+.keyboard-hint { margin-right: auto; }
+
+.chat-bubble :deep(.markdown-body p),
+.chat-bubble :deep(.markdown-body ul),
+.chat-bubble :deep(.markdown-body ol) { margin-bottom: 0.65em; }
+.chat-bubble :deep(.markdown-body :last-child) { margin-bottom: 0; }
+.chat-bubble :deep(.markdown-body ul),
+.chat-bubble :deep(.markdown-body ol) { list-style: revert; padding-left: 1.5em; }
+.chat-bubble :deep(.markdown-body a) { color: var(--wb-cyan); text-decoration: underline; }
+.chat-bubble :deep(.markdown-body pre) { overflow: auto; margin: 0.6em 0; padding: 0.65em; background: var(--wb-bg); border: 1px solid var(--wb-line); border-radius: 5px; }
+.chat-bubble :deep(.markdown-body code) { font: 0.88em/1.55 var(--wb-mono); }
+.chat-bubble :deep(.markdown-body :not(pre) > code) { color: var(--wb-accent); background: var(--wb-accent-soft); padding: 0.1em 0.25em; }
+.chat-bubble :deep(.markdown-body blockquote) { border-left: 2px solid var(--wb-accent); padding-left: 0.65em; color: var(--wb-muted); }
+.chat-bubble :deep(.markdown-body :is(h1, h2, h3, h4)) { font-weight: 700; margin: 0.8em 0 0.35em; }
+.chat-bubble :deep(.markdown-body table) { display: block; overflow-x: auto; }
+.chat-bubble :deep(.markdown-body th),
+.chat-bubble :deep(.markdown-body td) { padding: 0.28em 0.45em; border: 1px solid var(--wb-line); }
+
+@media (max-width: 560px) {
+    .chat-page { width: calc(100% - 20px); }
+    .chat-shell { height: max(510px, calc(100dvh - 99px)); }
+    .chat-bubble { max-width: calc(100% - 39px); }
 }
-
-.animate-bounce-sm {
-    animation: bounce-sm 0.6s ease-in-out infinite;
-}
-
-/* 移动端气泡宽度 */
-@media (max-width: 640px) {
-    .bubble-max {
-        max-width: 88%;
-    }
-}
-
-@media (min-width: 641px) {
-    .bubble-max {
-        max-width: 75%;
-    }
-}
-</style>
-
-<!-- Markdown 正文样式（非 scoped，因为 v-html 插入的内容需要全局样式） -->
-<style>
-.markdown-body {
-    font-size: 0.875rem;
-    line-height: 1.7;
-    color: inherit;
-    word-break: break-word;
-}
-
-.markdown-body p {
-    margin: 0 0 0.5em 0;
-}
-
-.markdown-body p:last-child {
-    margin-bottom: 0;
-}
-
-.markdown-body strong {
-    font-weight: 700;
-    color: inherit;
-}
-
-.markdown-body em {
-    font-style: italic;
-}
-
-.markdown-body ol {
-    list-style: decimal;
-    padding-left: 1.5em;
-    margin: 0.25em 0 0.5em 0;
-}
-
-.markdown-body ul {
-    list-style: disc;
-    padding-left: 1.5em;
-    margin: 0.25em 0 0.5em 0;
-}
-
-.markdown-body li {
-    margin-bottom: 0.25em;
-}
-
-.markdown-body li:last-child {
-    margin-bottom: 0;
-}
-
-.markdown-body code {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.8em;
-    padding: 0.15em 0.35em;
-    background-color: #f3f4f6;
-    border-radius: 4px;
-    color: #e11d48;
-}
-
-.dark .markdown-body code {
-    background-color: #374151;
-    color: #fca5a5;
-}
-
-.markdown-body pre {
-    margin: 0.5em 0;
-    padding: 0.75em 1em;
-    background-color: #f3f4f6;
-    border-radius: 8px;
-    overflow-x: auto;
-    font-size: 0.8em;
-    line-height: 1.5;
-}
-
-.dark .markdown-body pre {
-    background-color: #1f2937;
-}
-
-.markdown-body pre code {
-    background: none;
-    padding: 0;
-    color: inherit;
-    font-size: inherit;
-}
-
-.markdown-body blockquote {
-    border-left: 3px solid #d1d5db;
-    padding-left: 0.75em;
-    margin: 0.5em 0;
-    color: #6b7280;
-}
-
-.dark .markdown-body blockquote {
-    border-left-color: #4b5563;
-    color: #9ca3af;
-}
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4 {
-    font-weight: 700;
-    margin: 0.75em 0 0.25em 0;
-    line-height: 1.4;
-}
-
-.markdown-body h1 {
-    font-size: 1.2em;
-}
-
-.markdown-body h2 {
-    font-size: 1.1em;
-}
-
-.markdown-body h3 {
-    font-size: 1em;
-}
-
-.markdown-body a {
-    color: #2563eb;
-    text-decoration: underline;
-}
-
-.dark .markdown-body a {
-    color: #60a5fa;
-}
-
-.markdown-body hr {
-    border: none;
-    border-top: 1px solid #e5e7eb;
-    margin: 0.75em 0;
-}
-
-.dark .markdown-body hr {
-    border-top-color: #374151;
-}
+@media (pointer: coarse) { .keyboard-hint { display: none; } }
 </style>

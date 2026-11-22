@@ -1,16 +1,19 @@
 <template>
-    <el-card :body-style="{ padding: '20px' }" class="mb-5 border-1">
-        <!-- card body -->
-        <el-text class="mx-1 mr-3">标签名称</el-text>
-        <el-input v-model="searchTagName" placeholder="请输入（模糊查询）" class="w-50 mr-5" />
-
-        <el-text class="mx-1 mr-3">创建日期</el-text>
-        <el-date-picker style="top: 3px" v-model="pickDate" type="daterange" range-separator="至"
-            start-placeholder="开始时间" end-placeholder="结束时间" :shortcuts="shortcuts" size="default"
-            @change="datepickerChange" />
-
-        <el-button type="primary" class="ml-3" :icon="Search" @click="getTableData">查询</el-button>
-        <el-button class="ml-3" :icon="RefreshRight" @click="reset">重置</el-button>
+    <el-card class="admin-filter-card">
+        <el-form class="admin-filters" inline label-position="top" @submit.prevent="getTableData">
+            <el-form-item label="标签名称">
+                <el-input v-model="searchTagName" placeholder="输入关键词" class="filter-input" clearable />
+            </el-form-item>
+            <el-form-item label="创建日期">
+                <el-date-picker v-model="pickDate" type="daterange" range-separator="至"
+                    start-placeholder="开始日期" end-placeholder="结束日期" :shortcuts="shortcuts"
+                    class="filter-date" popper-class="weblog-range-popper" @change="datepickerChange" />
+            </el-form-item>
+            <el-form-item class="filter-actions">
+                <el-button type="primary" native-type="submit" :icon="Search">查询</el-button>
+                <el-button :icon="RefreshRight" @click="reset">重置</el-button>
+            </el-form-item>
+        </el-form>
     </el-card>
 
 
@@ -56,8 +59,8 @@
     </el-card>
 
     <!-- 新增标签 -->
-    <el-dialog v-model="isTagPublishDialogShow" title="新增标签" width="30%" :show-close="false" draggable>
-        <el-form :model="form" ref="formRef" label-position="top" :size="large" :rules="rules">
+    <el-dialog v-model="isTagPublishDialogShow" title="新增标签" width="480px">
+        <el-form :model="form" ref="formRef" label-position="top" size="large" :rules="rules">
             <el-form-item label="" prop="title">
                 <el-tag v-for="tag in dynamicTags" :key="tag" class="mx-1 mb-2" closable :disable-transitions="false"
                     @close="handleClose(tag)" type="info" round>
@@ -102,9 +105,9 @@ const reset = () => {
     searchTagName.value = ''
 }
 
-const datepickerChange = (e) => {
-    startDate.value = moment(e[0]).format('YYYY-MM-DD HH:mm:ss')
-    endDate.value = moment(e[1]).format('YYYY-MM-DD HH:mm:ss')
+const datepickerChange = (range) => {
+    startDate.value = range?.[0] ? moment(range[0]).format('YYYY-MM-DD HH:mm:ss') : null
+    endDate.value = range?.[1] ? moment(range[1]).format('YYYY-MM-DD HH:mm:ss') : null
 }
 
 const shortcuts = [

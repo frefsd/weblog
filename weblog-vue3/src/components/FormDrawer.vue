@@ -1,5 +1,5 @@
 <template>
-    <el-drawer v-model="showDrawer" :title="title" :size="size" :destroy-on-close="destoryOnClose"
+    <el-drawer v-model="showDrawer" :title="title" :size="drawerSize" :destroy-on-close="destoryOnClose"
         :close-on-click-modal="false">
         <div class="formDrawer">
             <div class="body">
@@ -14,7 +14,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 
 const showDrawer = ref(false)
 
@@ -34,6 +35,8 @@ const props = defineProps({
     }
 })
 
+const isNarrow = useMediaQuery('(max-width: 680px)')
+const drawerSize = computed(() => isNarrow.value ? '100%' : props.size)
 const loading = ref(false)
 const showLoading = () => loading.value = true
 const hideLoading = () => loading.value = false

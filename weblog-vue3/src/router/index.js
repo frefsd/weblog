@@ -1,25 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import AdminIndex from '@/pages/admin/index.vue';
-import About from '@/pages/about.vue';
-import NotFound from '@/pages/404.vue';
-import AdminLogin from '@/pages/admin/login.vue';
-import Admin from '@/layouts/admin.vue'
-import AdminArticleList from '@/pages/admin/article-list.vue'
-import AdminCategoryList from '@/pages/admin/category-list.vue'
-import AdminTagList from '@/pages/admin/tag-list.vue'
-import AdminBlogSetting from '@/pages/admin/blog-setting.vue'
-import AdminMonitorLog from '@/pages/admin/monitor-log.vue'
-import AdminMonitorRule from '@/pages/admin/monitor-rule.vue'
-import AdminMonitorAlert from '@/pages/admin/monitor-alert.vue'
-import Index from '@/pages/frontend/index.vue'
-import ArticleDetail from '@/pages/frontend/article-detail.vue'
-import CategoryList from '@/pages/frontend/category-list.vue'
-import TagList from '@/pages/frontend/tag-list.vue'
-import CategoryArticleList from '@/pages/frontend/category-article-list.vue'
-import TagArticleList from '@/pages/frontend/tag-article-list.vue'
-import ArchiveList from '@/pages/frontend/archive-list.vue'
-import SearchResults from '@/pages/frontend/search-results.vue'
-import AiChat from '@/pages/frontend/ai-chat.vue'
+const AdminIndex = () => import('@/pages/admin/index.vue')
+const About = () => import('@/pages/about.vue')
+const NotFound = () => import('@/pages/404.vue')
+const AdminLogin = () => import('@/pages/admin/login.vue')
+const Admin = () => import('@/layouts/admin.vue')
+const AdminArticleList = () => import('@/pages/admin/article-list.vue')
+const AdminCategoryList = () => import('@/pages/admin/category-list.vue')
+const AdminTagList = () => import('@/pages/admin/tag-list.vue')
+const AdminBlogSetting = () => import('@/pages/admin/blog-setting.vue')
+const AdminMonitorLog = () => import('@/pages/admin/monitor-log.vue')
+const AdminMonitorRule = () => import('@/pages/admin/monitor-rule.vue')
+const AdminMonitorAlert = () => import('@/pages/admin/monitor-alert.vue')
+const Index = () => import('@/pages/frontend/index.vue')
+const ArticleDetail = () => import('@/pages/frontend/article-detail.vue')
+const CategoryList = () => import('@/pages/frontend/category-list.vue')
+const TagList = () => import('@/pages/frontend/tag-list.vue')
+const CategoryArticleList = () => import('@/pages/frontend/category-article-list.vue')
+const TagArticleList = () => import('@/pages/frontend/tag-article-list.vue')
+const ArchiveList = () => import('@/pages/frontend/archive-list.vue')
+const SearchResults = () => import('@/pages/frontend/search-results.vue')
+const AiChat = () => import('@/pages/frontend/ai-chat.vue')
 
 const routes = [
     {
@@ -164,6 +164,7 @@ const routes = [
 const router = createRouter({
     // 4. 内部提供了 history 模式的实现。为了简单起见，我们在这里使用 hash 模式。
     history: createWebHistory(),
+    scrollBehavior: (_to, _from, savedPosition) => savedPosition || { top: 0 },
     routes, // `routes: routes` 的缩写
 })
 

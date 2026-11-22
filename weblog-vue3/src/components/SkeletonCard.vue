@@ -1,7 +1,7 @@
 <template>
-  <div class="group bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl shadow-md dark:bg-gray-800/75 dark:border-gray-600/30">
+  <div class="wb-panel overflow-hidden" aria-hidden="true">
     <!-- 封面图占位 -->
-    <div class="skeleton h-56 w-full rounded-t-xl"></div>
+    <div class="skeleton w-full" style="aspect-ratio: 2.3 / 1"></div>
     <div class="p-6">
       <!-- 标签占位 -->
       <div class="flex gap-2 mb-3">

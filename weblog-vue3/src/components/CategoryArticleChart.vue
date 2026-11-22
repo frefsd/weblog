@@ -1,102 +1,45 @@
-<template>
-    <div>
-        <el-card shadow="never" class="border-1">
-            <template #header>
-                <div class="flex justify-between">
-                    <span class="text-sm">文章分类统计</span>
-                </div>
-            </template>
-            <!-- card body -->
-            <div id="categoryChart" style="width: 100%; height: 300px;"> </div>
-        </el-card>
-    </div>
-</template>
-
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
-import * as echarts from 'echarts'
+import DashboardChart from './DashboardChart.vue'
 import { getCategoryArticleStatistics } from '@/api/admin/dashboard'
 
-var myChart = null
-
-// 必须用同一个函数引用注册与移除，匿名函数无法 removeEventListener
-const handleResize = () => {
-    myChart && myChart.resize()
+async function loadCategories() {
+    const response = await getCategoryArticleStatistics()
+    if (!response.success) return response
+    return { ...response, data: (response.data ?? []).filter(row => row.articleCount > 0) }
 }
 
-onMounted(() => {
-    getCategoryArticleStatistics().then((e) => {
-        var chartDom = document.getElementById('categoryChart');
-        myChart = echarts.init(chartDom);
-        var option;
-
-        if (e.success) {
-            let dataList = e.data
-
-            // 过滤掉文章数量为 0 的分类
-            let filteredData = dataList.filter(item => item.articleCount > 0)
-
-            // 准备图表数据
-            let chartData = filteredData.map(item => {
-                return {
-                    name: item.categoryName,
-                    value: item.articleCount
-                }
-            })
-
-            option = {
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}: {c}篇 ({d}%)'
-                },
-                legend: {
-                    orient: 'horizontal',
-                    bottom: '0',
-                    left: 'center'
-                },
-                series: [
-                    {
-                        name: '文章数量',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        avoidLabelOverlap: false,
-                        itemStyle: {
-                            borderRadius: 10,
-                            borderColor: '#fff',
-                            borderWidth: 2
-                        },
-                        label: {
-                            show: false,
-                            position: 'center'
-                        },
-                        emphasis: {
-                            label: {
-                                show: true,
-                                fontSize: 18,
-                                fontWeight: 'bold'
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data: chartData
-                    }
-                ]
-            };
-
-            option && myChart.setOption(option);
-        }
-    })
-
-    // 窗口大小变化时重新渲染
-    window.addEventListener('resize', handleResize)
-})
-
-onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize)
-    if (myChart) {
-        myChart.dispose()
-        myChart = null
+function makeOption(rows, color) {
+    const total = rows.reduce((sum, row) => sum + row.articleCount, 0)
+    return {
+        color: [color.cyan, color.accent, color.violet, color.yellow],
+        tooltip: { trigger: 'item', formatter: '{b} · {c} 篇 ({d}%)' },
+        title: {
+            text: String(total),
+            subtext: '篇文章',
+            left: 'center',
+            top: '35%',
+            textStyle: { color: color.text, fontSize: 26, fontWeight: 700 },
+            subtextStyle: { color: color.muted },
+        },
+        legend: {
+            type: 'scroll', left: 4, right: 4, bottom: 8,
+            textStyle: { color: color.muted },
+            pageTextStyle: { color: color.muted },
+            pageIconColor: color.muted,
+        },
+        series: [{
+            name: '文章数量',
+            type: 'pie',
+            radius: ['46%', '70%'],
+            center: ['50%', '45%'],
+            label: { show: false },
+            itemStyle: { borderColor: color.panel, borderWidth: 2, borderRadius: 4 },
+            data: rows.map(row => ({ name: row.categoryName, value: row.articleCount })),
+        }],
     }
-})
+}
 </script>
+
+<template>
+    <DashboardChart title="文章分类" :fetch-data="loadCategories" :make-option="makeOption" />
+</template>

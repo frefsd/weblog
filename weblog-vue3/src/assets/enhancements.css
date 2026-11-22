@@ -1,157 +1,173 @@
-/* 全局增强样式 - 让博客更大、更饱满、充满屏幕 */
-
-/* 1. 基础字体增强 */
-html {
-  font-size: 16px;
+.site-width {
+    width: min(calc(100% - 2 * var(--wb-gutter)), var(--wb-page-width));
+    margin-inline: auto;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  line-height: 1.6;
-  color: #2d3748;
-  background-color: #f8fafc;
+.site-page {
+    flex: 1;
+    padding-block: clamp(24px, 4vw, 52px);
 }
 
-/* 2. 容器增强 */
-.container {
-  width: 100%;
-  max-width: 100%;
+.site-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 292px);
+    gap: clamp(20px, 3vw, 38px);
+    align-items: start;
 }
 
-/* 3. 卡片增强 */
-.card-enhanced {
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+.wb-article-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 2vw, 22px);
 }
 
-.card-enhanced:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
+.wb-pagination {
+    justify-content: center;
+    margin-top: 24px;
 }
 
-/* 4. 按钮增强 */
-.btn-enhanced {
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+@media (max-width: 610px) {
+    .wb-article-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
-.btn-enhanced:hover {
-  transform: translateY(-1px);
+.site-rail {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
 }
 
-/* 5. 标题增强 */
-.heading-enhanced {
-  font-weight: 800;
-  line-height: 1.2;
-  color: #1a202c;
+.wb-panel {
+    min-width: 0;
+    border: 1px solid var(--wb-line);
+    border-radius: var(--wb-radius);
+    background: var(--wb-panel);
 }
 
-/* 6. 链接增强 */
-.link-enhanced {
-  color: #3182ce;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
+.wb-section-title {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin: 0;
+    color: var(--wb-text);
+    font: 700 clamp(1.35rem, 2vw, 1.8rem)/1.2 var(--wb-display);
 }
 
-.link-enhanced:hover {
-  color: #2c5282;
-  text-decoration: underline;
+.wb-section-title::before {
+    content: "";
+    width: 4px;
+    height: 0.88em;
+    flex: none;
+    background: var(--wb-accent);
+    box-shadow: 0 0 14px var(--wb-accent-soft);
 }
 
-/* 7. 代码块增强 */
-.code-enhanced {
-  border-radius: 8px;
-  padding: 20px;
-  font-size: 16px;
-  line-height: 1.5;
+.wb-page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid var(--wb-line);
 }
 
-/* 8. 表格增强 */
-.table-enhanced {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+.wb-page-heading h1 {
+    font-size: clamp(1.75rem, 3.8vw, 2.85rem);
+    overflow-wrap: anywhere;
 }
 
-/* 9. 图片增强 */
-.img-enhanced {
-  border-radius: 8px;
-  object-fit: cover;
+.wb-chip {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    padding: 2px 9px;
+    border: 1px solid var(--wb-line);
+    border-radius: 5px;
+    background: var(--wb-raised);
+    color: var(--wb-muted);
+    font-size: 0.8rem;
+    font-weight: 550;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
-/* 10. 间距增强 */
-.spacing-enhanced {
-  margin: 32px 0;
-  padding: 24px;
+a.wb-chip:hover,
+button.wb-chip:hover {
+    color: var(--wb-accent);
+    background: var(--wb-accent-soft);
+    border-color: color-mix(in srgb, var(--wb-accent) 46%, var(--wb-line));
 }
 
-/* 11. 响应式字体增强 (已注释，防止部署后整体布局放大)
-@media (min-width: 768px) {
-  html {
-    font-size: 17px;
-  }
+.wb-action,
+.wb-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    border: 1px solid var(--wb-line);
+    border-radius: 6px;
+    color: var(--wb-muted);
+    font-size: 0.875rem;
+    font-weight: 650;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
-@media (min-width: 1024px) {
-  html {
-    font-size: 18px;
-  }
-}
-*/
+.wb-action { padding: 0 14px; }
+.wb-icon-button { width: 42px; flex: none; padding: 0; }
 
-/* 12. 文章内容增强 */
-.article-content-enhanced {
-  max-width: 100%;
-  line-height: 1.8;
-  font-size: 18px;
-}
+.wb-action svg,
+.wb-icon-button svg { width: 17px; height: 17px; flex: none; }
 
-.article-content-enhanced p {
-  margin-bottom: 28px;
+.wb-action:hover,
+.wb-icon-button:hover {
+    border-color: var(--wb-dim);
+    background: var(--wb-raised);
+    color: var(--wb-text);
 }
 
-.article-content-enhanced h1 {
-  font-size: 2.5rem;
-  margin-top: 3rem;
-  margin-bottom: 1.5rem;
+.wb-action--primary {
+    border-color: var(--wb-accent);
+    background: var(--wb-accent);
+    color: var(--wb-accent-ink);
 }
 
-.article-content-enhanced h2 {
-  font-size: 2rem;
-  margin-top: 2.5rem;
-  margin-bottom: 1.25rem;
+.wb-action--primary:hover {
+    border-color: var(--wb-accent);
+    background: color-mix(in srgb, var(--wb-accent) 88%, var(--wb-text));
+    color: var(--wb-accent-ink);
 }
 
-.article-content-enhanced h3 {
-  font-size: 1.75rem;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
+.wb-state {
+    display: grid;
+    min-height: 132px;
+    align-content: center;
+    justify-items: center;
+    gap: 12px;
+    color: var(--wb-muted);
+    padding: 24px;
+    text-align: center;
 }
 
-/* 13. 导航增强 */
-.nav-enhanced {
-  padding: 20px 0;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+@media (max-width: 940px) {
+    .site-split { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* 14. 页脚增强 */
-.footer-enhanced {
-  padding: 40px 0;
-  margin-top: 60px;
-  background: #2d3748;
-  color: white;
+@media (pointer: coarse) {
+    .wb-action,
+    .wb-icon-button,
+    .wb-chip { min-height: 44px; }
+    .wb-icon-button { width: 44px; }
 }
 
-/* 15. 侧边栏增强 */
-.sidebar-enhanced {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.game-dialog-modal {
+    z-index: 99999 !important;
+}
+
+.game-dialog {
+    z-index: 100000 !important;
 }

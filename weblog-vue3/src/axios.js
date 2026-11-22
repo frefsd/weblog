@@ -33,6 +33,8 @@ instance.interceptors.response.use(function (response) {
     // 对响应数据做点什么
     return response.data;
 }, function (error) {
+    if (axios.isCancel(error)) return Promise.reject(error);
+
     // 防止报错：如果网络断了，error.response 可能是 undefined
     if (!error.response) {
         showMessage('网络错误，请检查服务器', 'error')

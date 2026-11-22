@@ -218,12 +218,12 @@ function handleClose() {
 .meter-label {
     font-size: 16px;
     font-weight: 600;
-    color: #374151;
+    color: var(--wb-text);
 }
 
 .meter-track {
     height: 24px;
-    background: #f3f4f6;
+    background: var(--wb-raised);
     border-radius: 12px;
     overflow: hidden;
     position: relative;
@@ -232,7 +232,7 @@ function handleClose() {
 .meter-fill {
     height: 100%;
     border-radius: 12px;
-    background: linear-gradient(90deg, #ec4899, #a855f7);
+    background: linear-gradient(90deg, var(--wb-accent), var(--wb-violet));
     transition: width 0.5s ease;
 }
 
@@ -243,16 +243,16 @@ function handleClose() {
     transform: translateY(-50%);
     font-size: 12px;
     font-weight: 700;
-    color: #6b7280;
+    color: var(--wb-muted);
 }
 
 /* 场景描述 */
 .scenario-box {
     padding: 16px 20px;
-    background: #fdf2f8;
+    background: var(--wb-accent-soft);
     border-radius: 12px;
     font-size: 15px;
-    color: #6b7280;
+    color: var(--wb-muted);
     line-height: 1.8;
     margin-bottom: 20px;
     flex-shrink: 0;
@@ -276,7 +276,7 @@ function handleClose() {
 }
 
 .dialogue-area::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+    background: var(--wb-line);
     border-radius: 2px;
 }
 
@@ -303,16 +303,16 @@ function handleClose() {
 }
 
 .bubble-ai .bubble-content {
-    background: #fff;
-    border: 1px solid #f3e8ff;
+    background: var(--wb-panel);
+    border: 1px solid var(--wb-line);
     border-radius: 12px 12px 12px 4px;
-    color: #374151;
+    color: var(--wb-text);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .bubble-user .bubble-content {
-    background: linear-gradient(135deg, #ec4899, #a855f7);
-    color: white;
+    background: var(--wb-accent);
+    color: var(--wb-accent-ink);
     border-radius: 12px 12px 4px 12px;
 }
 
@@ -346,7 +346,7 @@ function handleClose() {
 .dot {
     width: 8px;
     height: 8px;
-    background: #ec4899;
+    background: var(--wb-accent);
     border-radius: 50%;
     animation: pulse 1.2s ease-in-out infinite;
 }
@@ -374,7 +374,7 @@ function handleClose() {
 .result-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--wb-panel) 92%, transparent);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -396,20 +396,20 @@ function handleClose() {
 .result-title {
     font-size: 18px;
     font-weight: 600;
-    color: #374151;
+    color: var(--wb-text);
     margin-bottom: 8px;
 }
 
 .result-score {
     font-size: 14px;
-    color: #9ca3af;
+    color: var(--wb-dim);
     margin-bottom: 20px;
 }
 
 .restart-btn {
-    background: linear-gradient(135deg, #ec4899, #a855f7) !important;
+    background: var(--wb-accent) !important;
     border: none !important;
-    color: white !important;
+    color: var(--wb-accent-ink) !important;
 }
 
 /* 输入区域 */
@@ -422,9 +422,9 @@ function handleClose() {
 }
 
 .send-btn {
-    background: linear-gradient(135deg, #ec4899, #a855f7) !important;
+    background: var(--wb-accent) !important;
     border: none !important;
-    color: white !important;
+    color: var(--wb-accent-ink) !important;
 }
 
 .game-input :deep(.el-input-group__append) {
@@ -433,34 +433,4 @@ function handleClose() {
 }
 
 /* 暗黑模式适配 */
-html.dark .meter-label {
-    color: #e5e7eb;
-}
-
-html.dark .meter-track {
-    background: #374151;
-}
-
-html.dark .scenario-box {
-    background: rgba(236, 72, 153, 0.1);
-    color: #d1d5db;
-}
-
-html.dark .bubble-ai .bubble-content {
-    background: #1f2937;
-    border-color: #374151;
-    color: #e5e7eb;
-}
-
-html.dark .result-overlay {
-    background: rgba(17, 24, 39, 0.9);
-}
-
-html.dark .result-title {
-    color: #e5e7eb;
-}
-
-html.dark .input-area {
-    border-color: #374151;
-}
 </style>

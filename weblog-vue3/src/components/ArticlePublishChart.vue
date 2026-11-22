@@ -1,99 +1,35 @@
-<template>
-    <div>
-        <el-card shadow="never" class="border-1">
-            <template #header>
-                <div class="flex justify-between">
-                    <span class="text-sm">文章发布热点图</span>
-                </div>
-            </template>
-            <!-- card body -->
-            <div id="publishArticleChart" style="width: 100%; height: 300px;">
-            </div>
-        </el-card>
-    </div>
-</template>
-
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue';
-import * as echarts from 'echarts';
+import DashboardChart from './DashboardChart.vue'
 import { getDashboardPublishArticleStatisticsInfo } from '@/api/admin/dashboard'
 
-var myChart = null
-
-// 必须用同一个函数引用注册与移除，匿名函数无法 removeEventListener
-const handleResize = () => {
-    myChart && myChart.resize()
-}
-
-onMounted(() => {
-    getDashboardPublishArticleStatisticsInfo().then((e) => {
-        if (e.success) {
-            let dataList = e.data
-            let myData = []
-            dataList.forEach(item => {
-                myData.push([
-                    item.date,
-                    item.count
-                ]);
-            })
-
-            var chartDom = document.getElementById('publishArticleChart');
-            myChart = echarts.init(chartDom);
-
-            var option;
-
-            option = {
-                visualMap: {
-                    show: false,
-                    min: 0,
-                    max: 10
-                },
-                calendar: {
-                    top: 30,
-                    left: 30,
-                    right: 30,
-                    bottom: 30,
-                    itemSize: 18,
-                    itemStyle: {
-                        borderColor: '#fff',
-                        borderWidth: 2,
-                        shadowBlur: 10,
-                        shadowColor: 'rgba(0, 0, 0, 0.2)'
-                    },
-                    monthLabel: {
-                        nameMap: 'cn'
-                    },
-                    dayLabel: {
-                        nameMap: 'cn'
-                    },
-                    range: [new Date().getTime() - 3600 * 24 * 1000 * 6, new Date().getTime()]
-                },
-                series: {
-                    type: 'heatmap',
-                    coordinateSystem: 'calendar',
-                    data: myData,
-                    label: {
-                        show: true,
-                        formatter: '{c}',
-                        fontSize: 10,
-                        color: '#333'
-                    }
-                }
-            };
-
-            option && myChart.setOption(option);
-        }
-    })
-
-    // 窗口大小变化时重新渲染
-    window.addEventListener('resize', handleResize)
-})
-
-onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize)
-    if (myChart) {
-        myChart.dispose()
-        myChart = null
+function makeOption(rows, color) {
+    return {
+        grid: { top: 14, right: 8, bottom: 12, left: 6, containLabel: true },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        xAxis: {
+            type: 'category',
+            data: rows.map(row => row.date),
+            axisTick: { show: false },
+            axisLine: { lineStyle: { color: color.line } },
+            axisLabel: { color: color.muted, formatter: date => date.slice(-5), hideOverlap: true },
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: { color: color.muted },
+            splitLine: { lineStyle: { color: color.line, type: 'dashed' } },
+        },
+        series: [{
+            name: '发布文章',
+            type: 'bar',
+            data: rows.map(row => row.count),
+            barMaxWidth: 24,
+            itemStyle: { color: color.accent, borderRadius: [4, 4, 0, 0] },
+        }],
     }
-})
+}
 </script>
+
+<template>
+    <DashboardChart title="发布动态" caption="近 7 天 · 篇" :fetch-data="getDashboardPublishArticleStatisticsInfo" :make-option="makeOption" />
+</template>

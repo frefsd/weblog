@@ -1,6 +1,6 @@
 <template>
     <el-card  :body-style="{ padding: '20px' }">
-        <el-form :model="form" label-width="160px" :rules="rules">
+        <el-form class="settings-form" :model="form" label-position="top" :rules="rules">
             <el-form-item label="博客名称" prop="blogName">
                 <el-input v-model="form.blogName" clearable />
             </el-form-item>
@@ -23,7 +23,7 @@
                 <el-input v-model="form.introduction" type="textarea" />
             </el-form-item>
 
-            <el-form-item label="开启 GihHub 访问">
+            <el-form-item label="开启 GitHub 访问">
                 <el-switch v-model="isGithubCheck" inline-prompt :active-icon="Check" :inactive-icon="Close"
                     @change="githubSwitchChange" />
             </el-form-item>
@@ -133,6 +133,11 @@ const onSubmit = () => {
 </script>
 
 <style scoped>
+.settings-form { max-width: 760px; }
+.settings-form :deep(.el-form-item__label) { font-weight: 650; }
+.settings-form :deep(.el-input),
+.settings-form :deep(.el-textarea) { width: 100%; }
+
 /* 
    核心修改区域 
    定义一个固定的容器大小，这里设置为 150x150，你可以根据需要调整 

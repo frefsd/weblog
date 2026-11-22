@@ -1,22 +1,26 @@
 <template>
-    <el-card :body-style="{ padding: '20px' }" class="mb-5 border-1">
-        <el-text class="mx-1 mr-3">日志级别</el-text>
-        <el-select v-model="searchLevel" placeholder="全部" clearable class="search-select mr-5">
-            <el-option label="ERROR" value="ERROR" />
-            <el-option label="WARN" value="WARN" />
-            <el-option label="INFO" value="INFO" />
-        </el-select>
-
-        <el-text class="mx-1 mr-3">日志类型</el-text>
-        <el-select v-model="searchType" placeholder="全部" clearable class="search-select mr-5">
-            <el-option label="HTTP请求" value="HTTP_REQUEST" />
-            <el-option label="外部API" value="EXTERNAL_API" />
-            <el-option label="业务日志" value="BUSINESS" />
-        </el-select>
-
-        <el-button type="primary" class="ml-3" :icon="Search" @click="getTableData">查询</el-button>
-        <el-button class="ml-3" :icon="RefreshRight" @click="reset">重置</el-button>
-        <el-button type="danger" class="ml-3" :icon="Delete" @click="clearLogs">清空</el-button>
+    <el-card class="admin-filter-card">
+        <el-form class="admin-filters" inline label-position="top" @submit.prevent="getTableData">
+            <el-form-item label="日志级别">
+                <el-select v-model="searchLevel" placeholder="全部级别" clearable class="filter-select">
+                    <el-option label="ERROR" value="ERROR" />
+                    <el-option label="WARN" value="WARN" />
+                    <el-option label="INFO" value="INFO" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="日志类型">
+                <el-select v-model="searchType" placeholder="全部类型" clearable class="filter-select">
+                    <el-option label="HTTP 请求" value="HTTP_REQUEST" />
+                    <el-option label="外部 API" value="EXTERNAL_API" />
+                    <el-option label="业务日志" value="BUSINESS" />
+                </el-select>
+            </el-form-item>
+            <el-form-item class="filter-actions">
+                <el-button type="primary" native-type="submit" :icon="Search">查询</el-button>
+                <el-button :icon="RefreshRight" @click="reset">重置</el-button>
+                <el-button type="danger" plain :icon="Delete" @click="clearLogs">清空</el-button>
+            </el-form-item>
+        </el-form>
     </el-card>
 
     <el-card class="border-1">
@@ -25,15 +29,15 @@
                 <template #default="{ row }">
                     <div class="p-4">
                         <div class="mb-2">
-                            <span class="text-gray-500 text-sm">错误消息：</span>
+                            <span class="monitor-field-label text-sm">错误消息：</span>
                             <span class="text-red-500 text-sm">{{ row.errorMessage || '-' }}</span>
                         </div>
                         <div class="mb-2">
-                            <span class="text-gray-500 text-sm">请求耗时：</span>
+                            <span class="monitor-field-label text-sm">请求耗时：</span>
                             <span class="text-sm">{{ row.duration }}ms</span>
                         </div>
                         <div v-if="row.stackTrace">
-                            <span class="text-gray-500 text-sm">堆栈跟踪：</span>
+                            <span class="monitor-field-label text-sm">堆栈跟踪：</span>
                             <el-input type="textarea" :model-value="row.stackTrace" readonly rows="6" class="mt-1"
                                 style="font-family: monospace; font-size: 12px;" />
                         </div>
@@ -156,6 +160,8 @@ const handleSizeChange = (e) => {
 </script>
 
 <style scoped>
+.monitor-field-label { color: var(--wb-muted); }
+
 .search-select {
     --el-select-width: 140px;
 }

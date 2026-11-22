@@ -1,84 +1,45 @@
-<template>
-    <div>
-        <el-card shadow="never" class="border-1">
-            <template #header>
-                <div class="flex justify-between">
-                    <span class="text-sm">PV 访问量统计</span>
-                </div>
-            </template>
-            <!-- card body -->
-            <div id="pvChart" style="width: 100%; height: 300px;"></div>
-        </el-card>
-    </div>
-</template>
-
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
-import * as echarts from 'echarts'
+import DashboardChart from './DashboardChart.vue'
 import { getDashboardPVStatisticsInfo } from '@/api/admin/dashboard'
 
-var myChart = null
-
-// 必须用同一个函数引用注册与移除，匿名函数无法 removeEventListener
-const handleResize = () => {
-    myChart && myChart.resize()
-}
-
-onMounted(() => {
-    getDashboardPVStatisticsInfo().then((e) => {
-        var chartDom = document.getElementById('pvChart');
-        myChart = echarts.init(chartDom);
-        var option;
-
-
-        if (e.success) {
-            let dataList = e.data
-            let dates = dataList.map(item => item.date)
-            let pvs = dataList.map(item => item.pv)
-
-            option = {
-                tooltip: {
-                    trigger: 'axis'
+function makeOption(rows, color) {
+    return {
+        grid: { top: 14, right: 26, bottom: 12, left: 7, containLabel: true },
+        tooltip: { trigger: 'axis' },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: rows.map(row => row.date),
+            axisTick: { show: false },
+            axisLine: { lineStyle: { color: color.line } },
+            axisLabel: { color: color.muted, formatter: date => date.slice(-5), hideOverlap: true },
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: { color: color.muted },
+            splitLine: { lineStyle: { color: color.line, type: 'dashed' } },
+        },
+        series: [{
+            name: '浏览量',
+            type: 'line',
+            data: rows.map(row => row.pv),
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            itemStyle: { color: color.cyan },
+            lineStyle: { width: 2.5 },
+            areaStyle: {
+                color: {
+                    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                    colorStops: [{ offset: 0, color: color.cyan + '48' }, { offset: 1, color: color.cyan + '04' }],
                 },
-                xAxis: {
-                    type: 'category',
-                    data: dates,
-                    axisLabel: {
-                        rotate: 45
-                    }
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [
-                    {
-                        name: 'PV',
-                        data: pvs,
-                        type: 'line',
-                        smooth: true,
-                        areaStyle: {
-                            opacity: 0.3
-                        },
-                        itemStyle: {
-                            color: '#409EFF'
-                        }
-                    }
-                ]
-            };
-
-            option && myChart.setOption(option);
-        }
-    })
-
-    // 窗口大小变化时重新渲染
-    window.addEventListener('resize', handleResize)
-})
-
-onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize)
-    if (myChart) {
-        myChart.dispose()
-        myChart = null
+            },
+        }],
     }
-})
+}
 </script>
+
+<template>
+    <DashboardChart title="访问趋势" caption="近 7 天 · PV" :fetch-data="getDashboardPVStatisticsInfo" :make-option="makeOption" />
+</template>

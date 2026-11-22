@@ -1,17 +1,20 @@
 <template>
 
-    <el-card :body-style="{ padding: '20px' }" class="mb-5 border-1">
-        <!-- card body -->
-        <el-text class="mx-1 mr-3">文章标题</el-text>
-        <el-input v-model="searchTitle" placeholder="请输入（模糊查询）" class="w-50 mr-5" />
-
-        <el-text class="mx-1 mr-3">发布日期</el-text>
-        <el-date-picker style="top: 3px" v-model="pickDate" type="daterange" range-separator="至"
-            start-placeholder="开始时间" end-placeholder="结束时间" :shortcuts="shortcuts" size="default"
-            @change="datepickerChange" />
-
-        <el-button type="primary" class="ml-3" :icon="Search" @click="getTableData">查询</el-button>
-        <el-button class="ml-3" :icon="RefreshRight" @click="reset">重置</el-button>
+    <el-card class="admin-filter-card">
+        <el-form class="admin-filters" inline label-position="top" @submit.prevent="getTableData">
+            <el-form-item label="文章标题">
+                <el-input v-model="searchTitle" placeholder="输入关键词" class="filter-input" clearable />
+            </el-form-item>
+            <el-form-item label="发布日期">
+                <el-date-picker v-model="pickDate" type="daterange" range-separator="至"
+                    start-placeholder="开始日期" end-placeholder="结束日期" :shortcuts="shortcuts"
+                    class="filter-date" popper-class="weblog-range-popper" @change="datepickerChange" />
+            </el-form-item>
+            <el-form-item class="filter-actions">
+                <el-button type="primary" native-type="submit" :icon="Search">查询</el-button>
+                <el-button :icon="RefreshRight" @click="reset">重置</el-button>
+            </el-form-item>
+        </el-form>
     </el-card>
 
 
@@ -84,7 +87,7 @@
     </el-card>
 
     <!-- 写博客 -->
-    <el-dialog v-model="isArticlePublishEditorShow" fullscreen="true" :show-close="false" :modal="false">
+    <el-dialog v-model="isArticlePublishEditorShow" fullscreen :show-close="false" :modal="false">
 
         <template #header="{ close, titleId, titleClass }">
             <div class="">
@@ -102,13 +105,13 @@
                 </div>
             </div>
         </template>
-        <el-form :model="form" ref="publishArticleFormRef" label-position="top" :size="large" :rules="rules">
+        <el-form :model="form" ref="publishArticleFormRef" label-position="top" size="large" :rules="rules">
             <el-form-item label="标题" prop="title">
                 <el-input v-model="form.title" autocomplete="off" size="large" maxlength="40" show-word-limit
                     clearable />
             </el-form-item>
             <el-form-item label="内容" prop="content">
-                <MdEditor v-model="form.content" @onUploadImg="onUploadImg" editorId="publishArticleEditor" />
+                <MdEditor v-model="form.content" :theme="isDark ? 'dark' : 'light'" @onUploadImg="onUploadImg" editorId="publishArticleEditor" />
             </el-form-item>
             <el-form-item label="封面" prop="titleImage">
                 <el-upload class="avatar-uploader" action="#" :on-change="handleTitleImageChange" :auto-upload="false"
@@ -141,7 +144,7 @@
     </el-dialog>
 
     <!-- 编辑博客 -->
-    <el-dialog v-model="isArticleUpdateEditorShow" fullscreen="true" :show-close="false" :modal="false">
+    <el-dialog v-model="isArticleUpdateEditorShow" fullscreen :show-close="false" :modal="false">
         <template #header="{ close, titleId, titleClass }">
             <div class="my-header flex items-center justify-between">
                 <h4 class="font-bold">编辑文章</h4>
@@ -156,14 +159,14 @@
                 </div>
             </div>
         </template>
-        <el-form :model="form" ref="updateArticleFormRef" label-position="top" :size="large" :rules="rules">
+        <el-form :model="form" ref="updateArticleFormRef" label-position="top" size="large" :rules="rules">
             <el-form-item label="标题" prop="title">
                 <el-input v-model="form.title" autocomplete="off" size="large" maxlength="40" show-word-limit
                     clearable />
             </el-form-item>
             <el-form-item label="内容" prop="content">
                 <!-- <MDEditor :content="form.content" @event="handleMd"></MDEditor> -->
-                <MdEditor v-model="form.content" @onUploadImg="onUploadImg" editorId="updateArticleEditor" />
+                <MdEditor v-model="form.content" :theme="isDark ? 'dark' : 'light'" @onUploadImg="onUploadImg" editorId="updateArticleEditor" />
             </el-form-item>
             <el-form-item label="封面" prop="titleImage">
                 <el-upload class="avatar-uploader" action="#" :on-change="handleTitleImageChange" :auto-upload="false"
@@ -200,6 +203,7 @@ import { ref, reactive } from 'vue';
 import { publishArticle, getArticlePageList, deleteArticle, getArticleDetail, updateArticle, toggleArticleTop } from '@/api/admin/article'
 import { uploadFile } from '@/api/admin/file'
 import MdEditor from 'md-editor-v3'
+import { useTheme } from '@/composables/theme'
 import 'md-editor-v3/lib/style.css'
 import { showMessage } from '@/composables/util'
 import { useRouter } from 'vue-router'
@@ -208,6 +212,7 @@ import { selectTags, getTagSelect } from '@/api/admin/tag'
 import moment from 'moment';
 import { Search, RefreshRight, Top } from '@element-plus/icons-vue'
 
+const { isDark } = useTheme()
 const router = useRouter()
 
 const isArticlePublishEditorShow = ref(false)
@@ -229,9 +234,9 @@ const reset = () => {
     searchTitle.value = ''
 }
 
-const datepickerChange = (e) => {
-    startDate.value = moment(e[0]).format('YYYY-MM-DD HH:mm:ss')
-    endDate.value = moment(e[1]).format('YYYY-MM-DD HH:mm:ss')
+const datepickerChange = (range) => {
+    startDate.value = range?.[0] ? moment(range[0]).format('YYYY-MM-DD HH:mm:ss') : null
+    endDate.value = range?.[1] ? moment(range[1]).format('YYYY-MM-DD HH:mm:ss') : null
 }
 
 const shortcuts = [

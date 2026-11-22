@@ -2,112 +2,176 @@
 @tailwind components;
 @tailwind utilities;
 
-[type='text']:focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus, [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus, [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus {
-  box-shadow: 0 0 0 1px transparent inset!important;
+:root {
+    color-scheme: light;
+    --wb-bg: #f2f4f8;
+    --wb-panel: #ffffff;
+    --wb-raised: #eaf0f7;
+    --wb-hover: #e2e9f2;
+    --wb-line: #d5dfeb;
+    --wb-text: #152238;
+    --wb-muted: #4d5d72;
+    --wb-dim: #596b82;
+    --wb-accent: #a73520;
+    --wb-accent-soft: #fbe8e2;
+    --wb-accent-ink: #ffffff;
+    --wb-cyan: #087a76;
+    --wb-cyan-soft: #ddf4f0;
+    --wb-violet: #6353b1;
+    --wb-yellow: #8d5b0b;
+    --wb-grid: #334d7810;
+    --wb-overlay: #141e3266;
+    --wb-shadow: 0 18px 54px #21396019;
+    --wb-radius: 10px;
+    --wb-page-width: 1312px;
+    --wb-gutter: clamp(16px, 3.2vw, 48px);
+    --wb-header-height: 68px;
+    --wb-font: "Aptos", "Inter", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+    --wb-display: "Bahnschrift", "Aptos Display", "Inter", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+    --wb-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
-/* ==============================
-   Glassmorphism 毛玻璃全局样式
-   ============================== */
-
-/* 基础毛玻璃类 */
-.glass {
-  background: rgba(255, 255, 255, 0.65) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+html.dark {
+    color-scheme: dark;
+    --wb-bg: #0a0e18;
+    --wb-panel: #111827;
+    --wb-raised: #172135;
+    --wb-hover: #1e2b41;
+    --wb-line: #29364b;
+    --wb-text: #f2f4fa;
+    --wb-muted: #b3bfd2;
+    --wb-dim: #93a3bd;
+    --wb-accent: #ff886a;
+    --wb-accent-soft: #ff886a21;
+    --wb-accent-ink: #21100b;
+    --wb-cyan: #68ded6;
+    --wb-cyan-soft: #68ded619;
+    --wb-violet: #b0a2ff;
+    --wb-yellow: #f2bc6a;
+    --wb-grid: #a5c8ff0b;
+    --wb-overlay: #02060ed1;
+    --wb-shadow: 0 18px 54px #00000045;
 }
 
-/* el-card 毛玻璃化 */
-.el-card {
-  background: rgba(255, 255, 255, 0.65) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+/* Element Plus uses these variables inside body-level popups as well. */
+:root,
+html.dark {
+    --el-font-family: var(--wb-font);
+    --el-color-primary: var(--wb-accent);
+    --el-color-primary-light-3: color-mix(in srgb, var(--wb-accent) 82%, var(--wb-panel));
+    --el-color-primary-light-5: color-mix(in srgb, var(--wb-accent) 62%, var(--wb-panel));
+    --el-color-primary-light-7: color-mix(in srgb, var(--wb-accent) 35%, var(--wb-panel));
+    --el-color-primary-light-8: color-mix(in srgb, var(--wb-accent) 22%, var(--wb-panel));
+    --el-color-primary-light-9: var(--wb-accent-soft);
+    --el-color-primary-dark-2: color-mix(in srgb, var(--wb-accent) 88%, #49231f);
+    --el-bg-color: var(--wb-panel);
+    --el-bg-color-page: var(--wb-bg);
+    --el-bg-color-overlay: var(--wb-panel);
+    --el-text-color-primary: var(--wb-text);
+    --el-text-color-regular: var(--wb-muted);
+    --el-text-color-secondary: var(--wb-dim);
+    --el-text-color-placeholder: var(--wb-dim);
+    --el-border-color: var(--wb-line);
+    --el-border-color-light: var(--wb-line);
+    --el-border-color-lighter: var(--wb-line);
+    --el-border-color-extra-light: var(--wb-line);
+    --el-fill-color: var(--wb-raised);
+    --el-fill-color-light: var(--wb-raised);
+    --el-fill-color-lighter: var(--wb-raised);
+    --el-fill-color-extra-light: var(--wb-hover);
+    --el-fill-color-blank: var(--wb-panel);
+    --el-mask-color: var(--wb-overlay);
+    --el-box-shadow-light: var(--wb-shadow);
+    --el-box-shadow: var(--wb-shadow);
+    --el-border-radius-base: 6px;
 }
 
-.el-card__body {
-  background: transparent !important;
+body {
+    margin: 0;
+    background: var(--wb-bg);
+    color: var(--wb-text);
+    font: 16px/1.6 var(--wb-font);
 }
 
-/* el-dialog 毛玻璃化 */
-.el-dialog {
-  background: rgba(255, 255, 255, 0.75) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+#app,
+.app-view {
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
-.el-dialog__header {
-  background: transparent !important;
+.app-view {
+    display: flex;
+    flex-direction: column;
 }
 
-.el-dialog__body {
-  background: transparent !important;
+::selection {
+    background: var(--wb-accent);
+    color: var(--wb-accent-ink);
 }
 
-.el-dialog__footer {
-  background: transparent !important;
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--wb-cyan);
+    outline-offset: 3px;
 }
 
-/* el-dropdown-menu 毛玻璃化 */
-.el-dropdown-menu {
-  background: rgba(255, 255, 255, 0.75) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+#nprogress .bar {
+    background: var(--wb-accent);
 }
 
-.el-dropdown-menu__item {
-  background: transparent !important;
+#nprogress .peg {
+    box-shadow: 0 0 10px var(--wb-accent);
 }
 
-.el-dropdown-menu__item:hover {
-  background: rgba(255, 255, 255, 0.5) !important;
+body .el-button--primary:not(.is-plain):not(.is-link):not(.is-text) {
+    --el-button-text-color: var(--wb-accent-ink);
+    --el-button-hover-text-color: var(--wb-accent-ink);
+    --el-button-active-text-color: var(--wb-accent-ink);
 }
 
-/* ------------------------------
-   暗黑模式 — 毛玻璃适配
-   ------------------------------ */
-html.dark .el-card {
-  background: rgba(30, 30, 50, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+body .el-card {
+    --el-card-border-radius: var(--wb-radius);
 }
 
-html.dark .el-dialog {
-  background: rgba(30, 30, 50, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+body .el-dialog,
+body .el-message-box {
+    max-width: calc(100vw - 32px);
+    border: 1px solid var(--wb-line);
+    border-radius: var(--wb-radius);
 }
 
-html.dark .el-dropdown-menu {
-  background: rgba(30, 30, 50, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+body .el-dialog.is-fullscreen {
+    max-width: none;
+    border: none;
+    border-radius: 0;
 }
 
-html.dark .el-dropdown-menu__item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+body .el-form--inline .el-form-item {
+    max-width: 100%;
 }
 
-html.dark .glass {
-  background: rgba(30, 30, 50, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.skeleton {
+    background: linear-gradient(90deg, var(--wb-raised) 25%, var(--wb-hover) 50%, var(--wb-raised) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
 }
 
-/* 游戏弹窗遮罩层 —— 确保在最顶层 */
-.game-dialog-modal {
-  z-index: 99999 !important;
+@keyframes skeleton-shimmer {
+    to { background-position: -200% 0; }
 }
 
-.game-dialog {
-  z-index: 100000 !important;
+.app-view { animation: page-enter 160ms ease-out; }
+
+@keyframes page-enter {
+    from { opacity: 0.72; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

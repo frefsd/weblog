@@ -4,12 +4,12 @@ export function getArticleDetail(articleId) {
     return axios.post("/article/detail", { articleId })
 }
 
-export function searchArticles(keyword, current = 1, size = 10) {
+export function searchArticles(keyword, current = 1, size = 10, config) {
     return axios.post("/article/search", {
         keyword,
         current,
         size
-    })
+    }, config)
 }
 
 

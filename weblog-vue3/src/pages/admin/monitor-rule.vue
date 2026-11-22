@@ -62,9 +62,9 @@
     </el-card>
 
     <!-- 新增/编辑规则弹窗 -->
-    <el-dialog v-model="isRuleDialogShow" :title="editingRule ? '编辑告警规则' : '新增告警规则'" width="35%"
+    <el-dialog v-model="isRuleDialogShow" :title="editingRule ? '编辑告警规则' : '新增告警规则'" width="560px"
         :show-close="false" draggable>
-        <el-form :model="form" ref="formRef" label-position="top" :size="large" :rules="rules">
+        <el-form :model="form" ref="formRef" label-position="top" size="large" :rules="rules">
             <el-form-item label="规则名称" prop="name">
                 <el-input v-model="form.name" placeholder="例如：错误过多告警" maxlength="20" show-word-limit clearable />
             </el-form-item>

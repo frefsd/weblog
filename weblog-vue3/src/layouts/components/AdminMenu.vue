@@ -1,188 +1,101 @@
-<template>
-    <div class="meun shadow-md fixed bg-light-50 transition-all duration-300"
-        :style="{ width: $store.state.menuWidth }">
-        <div class="flex items-center justify-center h-[64px]">
-            <img v-if="$store.state.menuWidth == '250px'" src="@/assets/milk-cat.png" class="h-[60px]">
-            <img v-else src="@/assets/milk-cat.png" class="h-[60px]">
-        </div>
-
-        <el-menu :collapse="isCollapse" class="border-0 admin-el-menu" :default-active="defaultActive"
-            :collapse-transition="false" unique-opened @select="handleSelect">
-            <template v-for="(item, index) in menus" :index="index">
-                <!-- 有子菜单 -->
-                <el-sub-menu v-if="item.child && item.child.length > 0" :index="index.toString()" class="admin-el-sub-menu">
-                    <template #title>
-                        <el-icon>
-                            <component :is="item.icon"></component>
-                        </el-icon>
-                        <span>{{ item.name }}</span>
-                    </template>
-                    <el-menu-item v-for="(child, childIndex) in item.child" :key="childIndex" :index="child.path"
-                        class="admin-el-menu-item">
-                        <el-icon>
-                            <component :is="child.icon"></component>
-                        </el-icon>
-                        <span>{{ child.name }}</span>
-                    </el-menu-item>
-                </el-sub-menu>
-                <!-- 无子菜单 -->
-                <el-menu-item v-else :index="item.path" class="admin-el-menu-item">
-                    <el-icon>
-                        <component :is="item.icon"></component>
-                    </el-icon>
-                    <span>{{ item.name }}</span>
-                </el-menu-item>
-            </template>
-
-        </el-menu>
-    </div>
-</template>
-
 <script setup>
-import { useRouter, useRoute } from 'vue-router';
-import { computed, ref } from 'vue';
-import { useStore } from 'vuex';
+import { useRoute } from 'vue-router'
+import {
+    AdjustmentsHorizontalIcon, BellAlertIcon, ChartBarSquareIcon, ClipboardDocumentListIcon,
+    ClockIcon, CommandLineIcon, DocumentTextIcon, FolderIcon, TagIcon,
+} from '@heroicons/vue/24/outline'
 
-const router = useRouter()
+defineProps({
+    compact: { type: Boolean, default: false },
+})
+const emit = defineEmits(['navigate'])
 const route = useRoute()
-const store = useStore()
 
-const defaultActive = ref(route.path)
-
-// 是否折叠
-const isCollapse = computed(() => !(store.state.menuWidth == '250px'))
-
-const menus = [{
-    'name': '仪表盘',
-    'icon': 'Monitor',
-    'path': '/admin',
-    'child': []
-},
-{
-    'name': '文章管理',
-    'icon': 'Document',
-    'path': '/admin/article/list',
-    'child': []
-},
-{
-    'name': '分类管理',
-    'icon': 'FolderOpened',
-    'path': '/admin/category/list',
-    'child': []
-},
-{
-    'name': '标签管理',
-    'icon': 'PriceTag',
-    'path': '/admin/tag/list',
-    'child': []
-},
-{
-    'name': '博客设置',
-    'icon': 'Setting',
-    'path': '/admin/blog/setting',
-    'child': []
-},
-{
-    'name': '监控中心',
-    'icon': 'Monitor',
-    'path': '/admin/monitor/log',
-    'child': [
-        {
-            'name': '实时日志',
-            'icon': 'Tickets',
-            'path': '/admin/monitor/log',
-        },
-        {
-            'name': '告警规则',
-            'icon': 'Bell',
-            'path': '/admin/monitor/rule',
-        },
-        {
-            'name': '告警记录',
-            'icon': 'Clock',
-            'path': '/admin/monitor/alert',
-        }
-    ]
-}
+const groups = [
+    {
+        label: '内容管理',
+        items: [
+            { label: '仪表盘', icon: ChartBarSquareIcon, path: '/admin' },
+            { label: '文章管理', icon: DocumentTextIcon, path: '/admin/article/list' },
+            { label: '分类管理', icon: FolderIcon, path: '/admin/category/list' },
+            { label: '标签管理', icon: TagIcon, path: '/admin/tag/list' },
+            { label: '博客设置', icon: AdjustmentsHorizontalIcon, path: '/admin/blog/setting' },
+        ],
+    },
+    {
+        label: '运维监控',
+        items: [
+            { label: '实时日志', icon: ClipboardDocumentListIcon, path: '/admin/monitor/log' },
+            { label: '告警规则', icon: BellAlertIcon, path: '/admin/monitor/rule' },
+            { label: '告警记录', icon: ClockIcon, path: '/admin/monitor/alert' },
+        ],
+    },
 ]
-
-const handleSelect = (e) => {
-    console.log(defaultActive)
-    console.log(route.path)
-
-    router.push(e)
-}
 </script>
 
-<style>
-.meun {
-    transition: all 0.3s;
-    width: 250px;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    background-color: #001428 !important;
-}
+<template>
+    <nav class="admin-menu" :class="{ 'menu-compact': compact }" aria-label="后台导航">
+        <RouterLink class="admin-brand" to="/admin" aria-label="WeBlog 后台首页" title="WeBlog 后台首页" @click="emit('navigate')">
+            <span class="admin-brand-icon"><CommandLineIcon aria-hidden="true" /></span>
+            <span class="menu-label">
+                <strong>WeBlog</strong>
+                <small>管理后台</small>
+            </span>
+        </RouterLink>
+        <section v-for="group in groups" :key="group.label" class="menu-group" :aria-label="group.label">
+            <h2 class="menu-label">{{ group.label }}</h2>
+            <RouterLink
+                v-for="{ label, icon, path } in group.items"
+                :key="path"
+                :to="path"
+                class="menu-link"
+                :class="{ 'menu-current': path === route.path }"
+                :aria-label="label"
+                :title="compact ? label : undefined"
+                @click="emit('navigate')"
+            >
+                <component :is="icon" aria-hidden="true" />
+                <span class="menu-label">{{ label }}</span>
+            </RouterLink>
+        </section>
+    </nav>
+</template>
 
-.admin-el-menu {
-    background-color: #001428 !important;
-    border-right: 0;
+<style scoped>
+.admin-menu { padding: 0 12px 18px; }
+.admin-brand { min-height: 66px; display: flex; align-items: center; gap: 10px; padding-inline: 6px; border-bottom: 1px solid var(--wb-line); color: var(--wb-text); }
+.admin-brand strong,
+.admin-brand small { display: block; }
+.admin-brand strong { font: 700 1.15rem/1.1 var(--wb-display); }
+.admin-brand small { margin-top: 2px; color: var(--wb-dim); font-size: 0.7rem; }
+.admin-brand-icon { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border: 1px solid color-mix(in srgb, var(--wb-accent) 55%, var(--wb-line)); border-radius: 6px; background: var(--wb-accent-soft); color: var(--wb-accent); }
+.admin-brand-icon svg { width: 19px; height: 19px; }
+.menu-group { padding-top: 17px; }
+.menu-group + .menu-group { margin-top: 12px; border-top: 1px solid var(--wb-line); }
+.menu-group h2 { padding: 0 10px 8px; color: var(--wb-dim); font-size: 0.76rem; font-weight: 650; }
+.menu-link {
+    position: relative;
+    display: flex;
+    min-height: 43px;
+    align-items: center;
+    gap: 10px;
+    padding-inline: 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--wb-muted);
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: color 160ms ease, background-color 160ms ease;
 }
+.menu-link svg { width: 18px; height: 18px; flex: none; }
+.menu-link:hover { color: var(--wb-text); background: var(--wb-raised); }
+.menu-link.menu-current { color: var(--wb-accent); background: var(--wb-accent-soft); border-color: color-mix(in srgb, var(--wb-accent) 23%, var(--wb-line)); }
 
-.admin-el-menu-item {
-    color: #c0c4cc !important;
-}
-
-.el-menu-item.is-active {
-    background-color: #ffffff10 !important;
-}
-
-.el-menu-item.is-active:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 2px;
-    height: 100%;
-    background-color: var(--el-color-primary);
-}
-
-.el-menu-item:hover {
-    background-color: #ffffff10;
-}
-
-.admin-el-sub-menu .el-sub-menu__title {
-    color: #c0c4cc !important;
-    background-color: #001428 !important;
-}
-
-.admin-el-sub-menu .el-sub-menu__title:hover {
-    background-color: #ffffff10 !important;
-}
-
-.admin-el-sub-menu .el-menu {
-    background-color: #001428 !important;
-}
-
-.admin-el-sub-menu .el-menu .el-menu-item {
-    background-color: #001428 !important;
-    color: #c0c4cc !important;
-}
-
-.admin-el-sub-menu .el-menu .el-menu-item:hover {
-    background-color: #ffffff10 !important;
-}
-
-.meun::-webkit-scrollbar {
-    width: 0;
-}
-
-.logo {
-    height: 64px;
-    background-color: #001428;
-    color: #fff;
-    @apply flex justify-center items-center text-xl font-thin;
+@media (min-width: 861px) {
+    .menu-compact { padding-inline: 8px; }
+    .menu-compact .admin-brand,
+    .menu-compact .menu-link { justify-content: center; padding-inline: 0; }
+    .menu-compact .menu-label { display: none; }
 }
 </style>

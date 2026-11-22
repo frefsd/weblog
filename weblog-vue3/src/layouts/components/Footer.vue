@@ -1,28 +1,61 @@
+<script setup>
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+import { CommandLineIcon } from '@heroicons/vue/24/outline'
+import filingIcon from '@/assets/beian.png'
+
+const store = useStore()
+const brandName = computed(() => store.state.setting?.blogName || 'WeBlog')
+</script>
+
 <template>
-    <footer
-        class="mt-60px bottom-0 left-0 z-20 w-full p-2 bg-white border-t border-b border-gray-200 dark:bg-gray-800 dark:border-gray-600">
-        <div class="w-full mx-auto md:flex md:items-center md:justify-between p-4">
-            <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2026 Weblog™
-
-                <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank"
-                    class="mr-4 hover:underline md:mr-6">
-                    皖ICP备2026016086号-1
+    <footer class="site-footer">
+        <div class="site-width footer-content">
+            <RouterLink class="footer-brand" to="/">
+                <CommandLineIcon aria-hidden="true" />
+                {{ brandName }}
+            </RouterLink>
+            <div class="footer-links">
+                <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank" rel="noopener noreferrer">皖ICP备2026016086号-1</a>
+                <a href="https://beian.mps.gov.cn/#/query/webSearch?code=34162102003429" target="_blank" rel="noopener noreferrer">
+                    <img :src="filingIcon" alt="" width="14" height="14" loading="lazy" />
+                    皖公网安备34162102003429号
                 </a>
-                <a href="https://beian.mps.gov.cn/#/query/webSearch?code=34162102003429" rel="noreferrer"
-                    target="_blank">
-                    <img src="@/assets/beian.png" class="inline-block w-4 h-4 mr-1 align-text-bottom" />
-                    皖公网安备34162102003429号</a>
-
-            </span>
-            <ul class="flex flex-wrap items-center mt-3 text-sm font-medium text-gray-500 dark:text-gray-400 sm:mt-0">
-                Provided by&nbsp;
-                <li>
-                    <a href="https://github.com/frefsd" target="_blank" class="mr-4 hover:underline md:mr-6">
-                        凡尘</a>
-                </li>
-            </ul>
+                <a href="https://github.com/frefsd" target="_blank" rel="noopener noreferrer">© 2026 凡尘</a>
+            </div>
         </div>
     </footer>
 </template>
 
-<style scoped></style>
+<style scoped>
+.site-footer {
+    margin-top: auto;
+    border-top: 1px solid var(--wb-line);
+    background: var(--wb-panel);
+}
+.footer-content,
+.footer-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.footer-content {
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding-block: 24px;
+}
+
+.footer-brand,
+.footer-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    overflow-wrap: anywhere;
+}
+
+.footer-brand { color: var(--wb-text); font: 700 1rem/1.2 var(--wb-display); }
+.footer-brand svg { width: 18px; height: 18px; color: var(--wb-accent); }
+.footer-links { color: var(--wb-muted); font-size: 0.78rem; gap: 6px 20px; }
+.footer-links a:hover { color: var(--wb-accent); }
+</style>

@@ -1,7 +1,9 @@
 import { createApp } from 'vue'
 import 'virtual:windi.css'
 
+import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/assets/main.css'
+import '@/composables/theme'
 import '@/assets/enhancements.css'
 import 'animate.css';
 import 'nprogress/nprogress.css'
@@ -11,10 +13,6 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import store from './store'
 import "@/permission"
 
-// 代码高亮
-import hljs from 'highlight.js'
-import 'highlight.js/styles/tokyo-night-dark.css'
-
 // 富文本图片点击预览
 import "viewerjs/dist/viewer.css";
 import Viewer from "v-viewer";
@@ -23,13 +21,6 @@ const app = createApp(App)
 
 app.use(store)
 app.use(router)
-
-app.directive('highlight', function (el) {
-  let highlight = el.querySelectorAll('pre code');
-  highlight.forEach((block) => {
-    hljs.highlightBlock(block)
-  })
-});
 
 // 引入图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

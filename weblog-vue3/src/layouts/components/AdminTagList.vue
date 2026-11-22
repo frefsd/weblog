@@ -1,207 +1,103 @@
-<template>
-    <div class="tag-list" :style="{ left: $store.state.menuWidth }">
-        <el-tabs v-model="activeTab" type="card" @tab-remove="removeTab" @tab-change="tabChange"
-            style="min-width: 100px;">
-            <el-tab-pane v-for="item in tabList" :key="item.path" :label="item.title" :name="item.path"
-                :closable="item.path != '/admin'">
-            </el-tab-pane>
-        </el-tabs>
-
-        <span class="tag-dropdown-btn">
-            <el-dropdown @command="handleClose">
-                <span class="el-dropdown-link">
-                    <el-icon>
-                        <arrow-down />
-                    </el-icon>
-                </span>
-                <template #dropdown>
-                    <el-dropdown-menu>
-                        <el-dropdown-item command="closeOther">关闭其他</el-dropdown-item>
-                        <el-dropdown-item command="closeAll">关闭全部</el-dropdown-item>
-                    </el-dropdown-menu>
-                </template>
-            </el-dropdown>
-        </span>
-    </div>
-    <div style="height: 44px;"></div>
-</template>
-
 <script setup>
-import { ref } from 'vue'
-import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
+import { shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useCookies } from '@vueuse/integrations/useCookies'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const router = useRouter()
 const cookie = useCookies()
+const dashboard = { title: '仪表盘', path: '/admin' }
+const storedTabs = cookie.get('tabList')
+const tabs = shallowRef([dashboard])
 
-const activeTab = ref(route.path)
-const tabList = ref([
-    {
-        title: '仪表盘',
-        path: '/admin'
-    }
-])
-
-const handleClose = (e) => {
-    if (e == 'closeOther') {
-        tabList.value = tabList.value.filter(tab => tab.path == '/admin' || tab.path == activeTab.value)
-    } else if (e = 'closeAll') {
-        // 切换回后台首页
-        activeTab.value = '/admin'
-        tabList.value = [{
-            title: '仪表盘',
-            path: '/admin'
-        }]
-    }
-    cookie.set('tabList', tabList.value)
-}
-
-const tabChange = (e) => {
-    activeTab.value = e
-    router.push(e)
-}
-
-// 初始化 tab
-function initTabList() {
-    let tabs = cookie.get('tabList')
-    if (tabs) {
-        console.log(tabs)
-        tabList.value = tabs
-    }
-}
-initTabList()
-
-// 添加标签导航
-function addTab(tab) {
-    let noTab = tabList.value.findIndex(i => i.path == tab.path) == -1
-    if (noTab) {
-        tabList.value.push(tab)
-    }
-
-    cookie.set('tabList', tabList.value)
-}
-
-onBeforeRouteUpdate((to, from) => {
-    activeTab.value = to.path
-    // console.log(to)
-    addTab({
-        title: to.meta.title,
-        path: to.path
+if (Array.isArray(storedTabs)) {
+    const savedTabs = storedTabs.flatMap(item => {
+        if (typeof item?.path !== 'string' || item.path === dashboard.path) return []
+        const resolved = router.resolve(item.path)
+        if (resolved.matched[0]?.path !== '/admin') return []
+        return [{ title: resolved.meta.title, path: resolved.path }]
     })
-})
+    tabs.value = [dashboard, ...new Map(savedTabs.map(tab => [tab.path, tab])).values()]
+}
 
-const removeTab = (t) => {
-    let tabs = tabList.value
-    let currActiveTab = activeTab.value
-
-    // 如果想要关闭的 tab 等于现在处理 active 的 tab
-    if (currActiveTab == t) {
-        tabs.forEach((tab, index) => {
-            if (tab.path == t) {
-                const nextTab = tabs[index + 1] || tabs[index - 1]
-                if (nextTab) {
-                    currActiveTab = nextTab.path
-                }
-            }
-        })
+watch(tabs, (value) => cookie.set('tabList', value, { path: '/admin' }))
+watch(() => route.path, (path) => {
+    if (route.matched[0]?.path !== '/admin') return
+    if (!tabs.value.some(tab => tab.path === path)) {
+        tabs.value = [...tabs.value, { title: route.meta.title, path }]
     }
+}, { immediate: true })
 
-    activeTab.value = currActiveTab
-    // 删除当前 tab
-    tabList.value = tabList.value.filter(tab => tab.path != t)
-    cookie.set('tabList', tabList.value)
+function activate(path) {
+    if (path !== route.path) router.push(path)
+}
+
+function closeTab(path) {
+    if (path === dashboard.path) return
+    const index = tabs.value.findIndex(tab => tab.path === path)
+    if (path === route.path) {
+        activate((tabs.value[index + 1] || tabs.value[index - 1] || dashboard).path)
+    }
+    tabs.value = tabs.value.filter(tab => tab.path !== path)
+}
+
+function closeTabs(command) {
+    if (command === 'others') {
+        tabs.value = tabs.value.filter(tab => tab.path === dashboard.path || tab.path === route.path)
+    } else if (command === 'all') {
+        tabs.value = [dashboard]
+        activate(dashboard.path)
+    }
 }
 </script>
 
+<template>
+    <div class="admin-tabs">
+        <el-tabs :model-value="route.path" type="card" @tab-change="activate" @tab-remove="closeTab">
+            <el-tab-pane v-for="tab in tabs" :key="tab.path" :label="tab.title" :name="tab.path" :closable="tab.path !== dashboard.path" />
+        </el-tabs>
+        <el-dropdown trigger="click" @command="closeTabs">
+            <button type="button" class="wb-icon-button tabs-actions" aria-label="管理页面标签" title="管理页面标签">
+                <ChevronDownIcon aria-hidden="true" />
+            </button>
+            <template #dropdown>
+                <el-dropdown-menu>
+                    <el-dropdown-item command="others">关闭其他</el-dropdown-item>
+                    <el-dropdown-item command="all">关闭全部</el-dropdown-item>
+                </el-dropdown-menu>
+            </template>
+        </el-dropdown>
+    </div>
+</template>
+
 <style scoped>
-.tag-list {
-    @apply fixed flex items-center px-2;
-    top: 64px;
-    right: 0;
-    height: 44px;
-    z-index: 100;
-    transition: all 0.3s;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+.admin-tabs {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+    padding: 6px clamp(12px, 2.4vw, 28px);
+    border-top: 1px solid var(--wb-line);
+    background: color-mix(in srgb, var(--wb-bg) 67%, var(--wb-panel));
 }
 
-html.dark .tag-list {
-    background: rgba(30, 30, 50, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+.admin-tabs :deep(.el-tabs) { flex: 1; min-width: 0; }
+.admin-tabs :deep(.el-tabs__header) { margin: 0; height: auto; border: 0; }
+.admin-tabs :deep(.el-tabs__nav) { border: 0; gap: 4px; }
+.admin-tabs :deep(.el-tabs__item) {
+    height: 33px;
+    line-height: 31px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    color: var(--wb-muted);
+    font-size: 0.8rem;
 }
-
-:deep(.el-tabs__item) {
-    font-size: 12px;
-    border: 1px solid #d8dce5 !important;
-    border-radius: 3px !important;
-}
-
-:deep(.el-tabs--card>.el-tabs__header .el-tabs__item) {
-    margin-left: 0.1rem !important;
-    margin-right: 0.1rem !important;
-}
-
-:deep(.el-tabs__item.is-active) {
-    background-color: var(--el-color-primary) !important;
-    color: #fff;
-}
-
-:deep(.el-tabs__item.is-active::before) {
-    content: "";
-    background-color: #fff;
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    position: relative;
-    margin-right: 4px;
-}
-
-.tag-dropdown-btn {
-    @apply rounded flex items-center ml-auto justify-center px-2;
-    background: rgba(255, 255, 255, 0.5);
-    width: 32px;
-    height: 32px;
-}
-
-html.dark .tag-dropdown-btn {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-:deep(.el-tabs) {
-    height: 32px;
-}
-
-:deep(.el-tabs__header) {
-    @apply mb-0;
-}
-
-:deep(.el-tabs--card>.el-tabs__header .el-tabs__nav) {
-    @apply border-0;
-}
-
-:deep(.el-tabs--card>.el-tabs__header .el-tabs__item) {
-    @apply border-0 bg-white mx-1 rounded;
-    height: 32px;
-    line-height: 32px;
-}
-
-:deep(.el-tabs--card>.el-tabs__header) {
-    @apply border-0;
-}
-
-:deep(.el-tabs__nav-prev),
-:deep(.el-tabs__nav-next) {
-    height: 32px;
-    line-height: 32px;
-}
-
-:deep(.is-disabled) {
-    cursor: not-allowed;
-    @apply text-gray-300;
-}
+.admin-tabs :deep(.el-tabs__item.is-active) { border-color: var(--wb-line); background: var(--wb-panel); color: var(--wb-accent); }
+.admin-tabs :deep(.el-tabs__item:hover) { color: var(--wb-accent); }
+.admin-tabs :deep(.el-tabs__nav-prev),
+.admin-tabs :deep(.el-tabs__nav-next) { line-height: 33px; }
+.tabs-actions { min-height: 33px; width: 34px; border-color: transparent; }
+.tabs-actions svg { width: 14px; }
 </style>

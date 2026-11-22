@@ -1,101 +1,48 @@
-<template>
-    <div>
-        <el-card shadow="never" class="border-1">
-            <template #header>
-                <div class="flex justify-between">
-                    <span class="text-sm">文章标签统计</span>
-                </div>
-            </template>
-            <!-- card body -->
-            <div id="tagChart" style="width: 100%; height: 300px;">
-            </div>
-        </el-card>
-    </div>
-</template>
-
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
-import * as echarts from 'echarts'
+import DashboardChart from './DashboardChart.vue'
 import { getTagArticleStatistics } from '@/api/admin/dashboard'
 
-var myChart = null
-
-// 必须用同一个函数引用注册与移除，匿名函数无法 removeEventListener
-const handleResize = () => {
-    myChart && myChart.resize()
+async function loadTags() {
+    const response = await getTagArticleStatistics()
+    if (!response.success) return response
+    return { ...response, data: (response.data ?? []).filter(row => row.articleCount > 0) }
 }
 
-onMounted(() => {
-    getTagArticleStatistics().then((e) => {
-        var chartDom = document.getElementById('tagChart');
-        myChart = echarts.init(chartDom);
-        var option;
-
-        if (e.success) {
-            let dataList = e.data
-
-            // 过滤掉文章数量为 0 的标签
-            let filteredData = dataList.filter(item => item.articleCount > 0)
-
-            // 准备图表数据
-            let tagNames = filteredData.map(item => item.tagName)
-            let articleCounts = filteredData.map(item => item.articleCount)
-
-            option = {
-                tooltip: {
-                    trigger: 'axis',
-                    axisPointer: {
-                        type: 'shadow'
-                    }
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    top: '3%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: tagNames,
-                    axisLabel: {
-                        rotate: 45,
-                        interval: 0
-                    }
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [
-                    {
-                        name: '文章数量',
-                        type: 'bar',
-                        barWidth: '50%',
-                        data: articleCounts,
-                        itemStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: '#83bff6' },
-                                { offset: 0.5, color: '#188df0' },
-                                { offset: 1, color: '#188df0' }
-                            ])
-                        }
-                    }
-                ]
-            };
-
-            option && myChart.setOption(option);
-        }
-    })
-
-    // 窗口大小变化时重新渲染
-    window.addEventListener('resize', handleResize)
-})
-
-onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize)
-    if (myChart) {
-        myChart.dispose()
-        myChart = null
+function makeOption(rows, color) {
+    const ordered = [...rows].sort((a, b) => b.articleCount - a.articleCount)
+    const maxVisible = 7
+    return {
+        grid: { top: 8, right: ordered.length > maxVisible ? 24 : 13, bottom: 10, left: 6, containLabel: true },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        xAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: { color: color.muted },
+            splitLine: { lineStyle: { color: color.line, type: 'dashed' } },
+        },
+        yAxis: {
+            type: 'category',
+            inverse: true,
+            data: ordered.map(row => row.tagName),
+            axisLabel: { color: color.muted, width: 88, overflow: 'truncate' },
+            axisTick: { show: false },
+            axisLine: { show: false },
+        },
+        dataZoom: ordered.length > maxVisible ? [
+            { type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: false, moveOnMouseWheel: true, startValue: 0, endValue: maxVisible - 1 },
+            { type: 'slider', yAxisIndex: 0, startValue: 0, endValue: maxVisible - 1, right: 0, width: 12, showDetail: false, borderColor: color.line, fillerColor: color.violet + '44', handleSize: '95%' },
+        ] : [],
+        series: [{
+            name: '文章数量',
+            type: 'bar',
+            data: ordered.map(row => row.articleCount),
+            barMaxWidth: 14,
+            itemStyle: { color: color.violet, borderRadius: [0, 3, 3, 0] },
+        }],
     }
-})
+}
 </script>
+
+<template>
+    <DashboardChart title="文章标签" :fetch-data="loadTags" :make-option="makeOption" />
+</template>
