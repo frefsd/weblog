@@ -2,8 +2,10 @@ package com.blog.ai.listener;
 
 import com.blog.ai.event.ArticleChangeEvent;
 import com.blog.ai.service.RagService;
+import com.blog.event.SeoRebuildRequestedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -15,6 +17,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class ArticleIndexListener {
 
     private final RagService ragService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 听完事务提交后异步重建索引。
@@ -27,10 +30,21 @@ public class ArticleIndexListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleArticleChange(ArticleChangeEvent event) {
         log.info("收到文章变更事件: articleId={}, type={}", event.getArticleId(), event.getType());
-        switch (event.getType()) {
-            case CREATED -> ragService.addDocument(event.getArticleId(), event.getTitle(), event.getContent());
-            case UPDATED -> ragService.updateDocument(event.getArticleId(), event.getTitle(), event.getContent());
-            case DELETED -> ragService.removeDocument(event.getArticleId());
+
+        // 先请求前端重建：SEO 与 RAG 索引是两件独立的事，
+        // embedding 接口超时不应导致文章永远没有预渲染页面
+        eventPublisher.publishEvent(new SeoRebuildRequestedEvent(
+                "文章变更: " + event.getType() + " id=" + event.getArticleId()));
+
+        try {
+            switch (event.getType()) {
+                case CREATED -> ragService.addDocument(event.getArticleId(), event.getTitle(), event.getContent());
+                case UPDATED -> ragService.updateDocument(event.getArticleId(), event.getTitle(), event.getContent());
+                case DELETED -> ragService.removeDocument(event.getArticleId());
+            }
+        } catch (Exception e) {
+            // 索引失败只影响 AI 问答效果，不能影响已经提交的文章数据
+            log.error("文章索引更新失败: articleId={}, type={}", event.getArticleId(), event.getType(), e);
         }
     }
 }

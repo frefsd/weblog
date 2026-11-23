@@ -383,13 +383,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             throw new BusinessException("文章不存在");
         }
 
-        // 2. 自增阅读数（始终写入数据库，保证实时准确）
-        article.setReadNum(article.getReadNum() + 1);
-        articleMapper.updateById(article);
+        // 预渲染请求（构建期无头浏览器抓取）不计入阅读量与访客统计，
+        // 否则每次构建都会给所有文章刷一遍阅读量、并产生大量 localhost 访客记录
+        boolean prerender = "1".equals(request.getHeader("X-Prerender"));
 
-        // 3. 异步记录访客信息与日 PV（不阻塞响应）
-        visitorRecordService.recordVisitorAsync(request);
-        statisticsArticlePvService.upsertDailyPV(LocalDate.now());
+        // 2. 自增阅读数（始终写入数据库，保证实时准确）
+        if (!prerender) {
+            article.setReadNum(article.getReadNum() + 1);
+            articleMapper.updateById(article);
+
+            // 3. 异步记录访客信息与日 PV（不阻塞响应）
+            visitorRecordService.recordVisitorAsync(request);
+            statisticsArticlePvService.upsertDailyPV(LocalDate.now());
+        }
 
         // 4. 通过 self 调用 @Cacheable 方法获取缓存详情
         ArticleFrontendDetailVO detail = self.getCachedArticleDetail(articleId);
@@ -474,6 +480,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         ArticleFrontendDetailVO vo = new ArticleFrontendDetailVO();
         vo.setId(article.getId());
         vo.setTitle(article.getTitle());
+        // 摘要与封面图供前端写入 meta description / og:image
+        vo.setDescription(article.getDescription());
+        vo.setTitleImage(article.getTitleImage());
         vo.setContent(content == null ? "" : content.getContent());
         vo.setCreateTime(article.getCreateTime().format(FRONTEND_DT));
         vo.setUpdateTime(article.getUpdateTime() != null ? article.getUpdateTime().format(FRONTEND_DT) : null);

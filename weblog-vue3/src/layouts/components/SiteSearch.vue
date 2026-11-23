@@ -86,7 +86,7 @@ watch(keyword, (value, _, onCleanup) => {
                 <RouterLink
                     v-for="article in results"
                     :key="article.id"
-                    :to="{ path: '/article/detail', query: { articleId: article.id } }"
+                    :to="{ name: 'ArticleDetail', params: { id: article.id } }"
                     class="quick-result"
                     @click="close"
                 >

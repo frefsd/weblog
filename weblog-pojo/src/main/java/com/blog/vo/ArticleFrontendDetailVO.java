@@ -21,6 +21,16 @@ public class ArticleFrontendDetailVO {
     private String title;
 
     /**
+     * 文章摘要（供 SEO description 与分享卡片使用）
+     */
+    private String description;
+
+    /**
+     * 封面图地址（供 og:image 使用）
+     */
+    private String titleImage;
+
+    /**
      * 文章内容
      */
     private String content;

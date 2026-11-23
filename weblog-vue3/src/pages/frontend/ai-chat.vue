@@ -122,7 +122,7 @@ function setStreamingRef(el, msg) {
 }
 function goArticle(articleId) {
     if (articleId) {
-        router.push({ path: '/article/detail', query: { articleId } })
+        router.push({ name: 'ArticleDetail', params: { id: articleId } })
     }
 }
 

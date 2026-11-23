@@ -97,7 +97,15 @@ const routes = [
         }
     },
     {
+        // 兼容历史链接 /article/detail?articleId=123 → /article/123
+        // 必须排在动态路由之前，否则会被 :id 匹配成 id='detail'
         path: '/article/detail',
+        redirect: (to) => (to.query.articleId ? `/article/${to.query.articleId}` : '/'),
+    },
+    {
+        // 静态路径形式，便于搜索引擎收录与预渲染枚举
+        path: '/article/:id(\\d+)',
+        name: 'ArticleDetail',
         component: ArticleDetail,
         meta: {
             title: '文章详情页'

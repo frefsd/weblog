@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Admin panel - no need to index
+Disallow: /admin
+
+# Search result page - dynamic aggregation, low index value
+Disallow: /search
+
+Sitemap: https://www.fanchen.tech/sitemap.xml

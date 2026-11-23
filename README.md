@@ -202,10 +202,61 @@ location / {
     index index.html;
     try_files $uri $uri/ /index.html;
 }
+
 location /api/ {
     proxy_pass http://localhost:8081/;
+    # 后端限流依赖该头识别真实客户端 IP；缺少时所有请求会退化为代理地址，
+    # 全站共享同一份限流配额（一个人就能把登录接口锁死）
+    proxy_set_header X-Real-IP $remote_addr;
 }
+
+# 站点地图由后端动态生成，必须反向代理。
+# 否则会被上面的 try_files 兜底成 index.html，搜索引擎会报 sitemap 格式错误。
+location = /sitemap.xml {
+    proxy_pass http://localhost:8081/sitemap.xml;
+}
+
+# robots.txt 是 dist/robots.txt 静态文件，被 try_files 命中即可，无需单独配置
 ```
+
+### SEO：预渲染与自动重建
+
+前端是 SPA，直接部署的 `index.html` 只有一个空 `<div id="app">`，百度蜘蛛不执行 JS，
+抓不到任何内容。因此生产构建必须用 **`npm run build:seo`**（构建 + 预渲染），
+它会用无头 Chrome 把每个路由渲染成带正文的静态 HTML。
+
+构建要求：后端已启动（脚本要从 `/sitemap.xml` 和 `/api` 取数据）、安装 devDependencies、有 Chrome/Edge。
+
+**文章发布后自动重建**（可选，默认关闭）：
+
+```yaml
+seo:
+  site-url: https://www.fanchen.tech
+  auto-rebuild:
+    enabled: true
+    command: bash /www/deploy/weblog-rebuild.sh   # 由你提供的构建脚本
+    working-dir: /www/wwwroot/weblog
+    debounce-seconds: 60                          # 60 秒内多次变更合并为一次
+    timeout-seconds: 600
+```
+
+示例脚本 `/www/deploy/weblog-rebuild.sh`：
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /www/wwwroot/weblog/weblog-vue3
+npm run build:seo
+
+echo "[$(date '+%F %T')] rebuild done"
+```
+
+执行日志写入后端目录下的 `logs/seo-rebuild.log`，状态可通过
+`POST /admin/seo/status` 查询，手动触发用 `POST /admin/seo/rebuild`。
+
+> ⚠️ 该方案构建期间 `dist` 会被清空重建（约 1~2 分钟），站点短暂不可用。
+> 无法接受的话，把脚本改成构建到 `dist.new` 再切换 Nginx 的软链接。
 
 ---
 

@@ -4,7 +4,28 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/cat-logo.svg" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weblog 首页</title>
+
+    <title>WeBlog - 个人技术博客</title>
+    <meta name="description" content="WeBlog 是一个记录 Java、Spring Boot、Vue 3 与 AI 实践的个人技术博客，包含技术笔记、源码分析与项目复盘。">
+    <meta name="keywords" content="WeBlog,Java,Spring Boot,Vue3,技术博客,后端开发,RAG,AI">
+    <meta name="author" content="fanchen">
+    <meta name="robots" content="index,follow">
+    <meta name="theme-color" content="#111827">
+
+    <!-- 社交分享预览（微信/知乎/微博等抓取 og 标签） -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="WeBlog">
+    <meta property="og:title" content="WeBlog - 个人技术博客">
+    <meta property="og:description" content="记录 Java、Spring Boot、Vue 3 与 AI 实践的个人技术博客。">
+    <meta property="og:url" content="https://www.fanchen.tech/">
+    <meta property="og:image" content="https://www.fanchen.tech/cat-logo.svg">
+    <meta name="twitter:card" content="summary">
+
+    <!--
+      canonical 由 src/composables/seo.js 在路由切换时动态创建。
+      这里刻意不预置 <link rel="canonical">：SPA 所有路由共用同一份 HTML，
+      预置成首页地址会让不执行 JS 的爬虫把每篇文章都判定为首页副本，比不写更糟。
+    -->
   </head>
   <body>
     <div id="app"></div>

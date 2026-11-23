@@ -50,6 +50,17 @@ public class AsyncConfig {
         return buildExecutor("ai-task-", 1, 2, 500);
     }
 
+    /**
+     * SEO 站点重建线程池。
+     *
+     * <p>必须独立：构建命令最长可能跑 10 分钟，若放在 @Scheduled 默认的
+     * 单线程调度器里，会连带卡住日志归档、游戏会话清理等其他定时任务。</p>
+     */
+    @Bean("seoTaskExecutor")
+    public Executor seoTaskExecutor() {
+        return buildExecutor("seo-rebuild-", 1, 1, 4);
+    }
+
     private Executor buildExecutor(String prefix, int corePoolSize, int maxPoolSize, int queueCapacity) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);

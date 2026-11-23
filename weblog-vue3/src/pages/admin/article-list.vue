@@ -323,7 +323,7 @@ const onUploadImg = async (files, callback) => {
 
 const previewArticle = (row) => {
     // 打开一个新页面
-    let routeData = router.resolve({ path: '/article/detail', query: { articleId: row.id } });
+    let routeData = router.resolve({ name: 'ArticleDetail', params: { id: row.id } });
     window.open(routeData.href, '_blank');
 }
 

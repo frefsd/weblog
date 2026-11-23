@@ -28,4 +28,16 @@ logging:
   file:
     name: logs/weblog.log
 
+# SEO：sitemap.xml 中使用的站点根地址（不含结尾斜杠）
+seo:
+  site-url: https://www.fanchen.tech
+  # 文章变更后自动重建前端（预渲染）。默认关闭，生产环境按需开启并配置脚本。
+  auto-rebuild:
+    enabled: false
+    # 示例：bash /www/deploy/weblog-rebuild.sh
+    command: ""
+    working-dir: ""
+    debounce-seconds: 60
+    timeout-seconds: 600
+
 

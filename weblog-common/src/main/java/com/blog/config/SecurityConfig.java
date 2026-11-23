@@ -60,7 +60,9 @@ public class SecurityConfig {
                                 "/archive/**",                 // 前台归档接口
                                 "/blog/**",                    // 博客设置接口
                                 "/game/**",                    // 前台游戏接口
-                                "/ai/**"                       // ai聊天接口
+                                "/ai/**",                      // ai聊天接口
+                                "/sitemap.xml",                // 站点地图（搜索引擎抓取，必须匿名可访问）
+                                "/robots.txt"                  // 抓取规则（静态文件，兜底放行）
                         ).permitAll()
                         // 明确放行 GET 和 POST 的 /login 请求,做兜底
                         .requestMatchers(HttpMethod.GET, "/login").permitAll()

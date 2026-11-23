@@ -3,6 +3,7 @@ import { getToken } from '@/composables/auth'
 import { showMessage } from '@/composables/util'
 import store from '@/store'
 import { showPageLoading, hidePageLoading } from '@/composables/util'
+import { applyRouteSeo } from '@/composables/seo'
 
 
 // 全局前置守卫
@@ -49,10 +50,9 @@ router.beforeEach(async (to, from, next) => {
     next()
 })
 
-router.afterEach((to, from) => {
-    // 设置页面标题
-    let title = (to.meta.title ? to.meta.title : '') + ' - WeBlog'
-    document.title = title
+router.afterEach((to) => {
+    // 设置页面标题、分享信息与 canonical
+    applyRouteSeo(to)
 
     hidePageLoading()
 })

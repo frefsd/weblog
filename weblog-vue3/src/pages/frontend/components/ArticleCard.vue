@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const coverFailed = shallowRef(false)
-const detail = computed(() => ({ path: '/article/detail', query: { articleId: props.article.id } }))
+const detail = computed(() => ({ name: 'ArticleDetail', params: { id: props.article.id } }))
 const date = computed(() => String(props.article.createTime ?? '').slice(0, 10))
 watch(() => props.article.titleImage, () => { coverFailed.value = false })
 </script>

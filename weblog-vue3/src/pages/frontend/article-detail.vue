@@ -1,5 +1,5 @@
 <script setup>
-import { computed, shallowRef } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ArrowLeftIcon, ArrowRightIcon, CalendarDaysIcon, EyeIcon, FolderIcon } from '@heroicons/vue/24/outline'
 import MarkdownIt from 'markdown-it'
@@ -14,9 +14,11 @@ import TopicLinks from './components/TopicLinks.vue'
 import { getArticleDetail } from '@/api/frontend/article'
 import { getCategories } from '@/api/frontend/category'
 import { getTags } from '@/api/frontend/tag'
+import { applyArticleSeo } from '@/composables/seo'
 
 const route = useRoute()
-const articleId = route.query.articleId
+// 路由改为 /article/:id，同时用 computed 保证"上一篇/下一篇"跳转时能重新加载
+const articleId = computed(() => route.params.id)
 const state = shallowRef('loading')
 const article = shallowRef(null)
 const categories = shallowRef([])
@@ -37,23 +39,32 @@ const relatedArticles = computed(() => [
     { label: '下一篇', icon: ArrowRightIcon, article: article.value?.nextArticle },
 ].filter(item => item.article?.id))
 
+// 请求序号：快速切换"上一篇/下一篇"时，旧请求可能后到并覆盖新文章
+let loadToken = 0
+
 async function loadArticle() {
-    if (typeof articleId !== 'string' || !/^\d+$/.test(articleId)) {
+    const id = articleId.value
+    if (typeof id !== 'string' || !/^\d+$/.test(id)) {
         state.value = 'missing'
         return
     }
 
+    const token = ++loadToken
     state.value = 'loading'
     try {
-        const response = await getArticleDetail(articleId)
+        const response = await getArticleDetail(id)
+        if (token !== loadToken) return
         article.value = response.success ? response.data : null
         state.value = article.value ? 'ready' : 'missing'
+        // 用文章自身的标题与摘要覆盖通用 SEO 信息
+        if (article.value) applyArticleSeo(article.value)
     } catch {
+        if (token !== loadToken) return
         state.value = 'failed'
     }
 }
 
-loadArticle()
+watch(articleId, loadArticle, { immediate: true })
 getCategories().then(response => { if (response.success) categories.value = response.data ?? [] }).catch(() => {})
 getTags().then(response => { if (response.success) tags.value = response.data ?? [] }).catch(() => {})
 </script>
@@ -94,7 +105,7 @@ getTags().then(response => { if (response.success) tags.value = response.data ??
                 </article>
 
                 <nav v-if="relatedArticles.length" class="related-articles" aria-label="相邻文章">
-                    <RouterLink v-for="item in relatedArticles" :key="item.label" :to="{ path: '/article/detail', query: { articleId: item.article.id } }" class="wb-panel adjacent-article">
+                    <RouterLink v-for="item in relatedArticles" :key="item.label" :to="{ name: 'ArticleDetail', params: { id: item.article.id } }" class="wb-panel adjacent-article">
                         <span><component :is="item.icon" aria-hidden="true" /> {{ item.label }}</span>
                         <strong>{{ item.article.title }}</strong>
                     </RouterLink>

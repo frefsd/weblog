@@ -47,7 +47,7 @@ loadArchives()
                     <h2>{{ month.month }} <span>{{ month.articleCount }} 篇</span></h2>
                     <ul>
                         <li v-for="article in month.articles" :key="article.id">
-                            <RouterLink :to="{ path: '/article/detail', query: { articleId: article.id } }" class="archive-entry">
+                            <RouterLink :to="{ name: 'ArticleDetail', params: { id: article.id } }" class="archive-entry">
                                 <span class="entry-cover">
                                     <img v-if="article.titleImage" :src="article.titleImage" alt="" loading="lazy" />
                                     <DocumentTextIcon v-else aria-hidden="true" />
