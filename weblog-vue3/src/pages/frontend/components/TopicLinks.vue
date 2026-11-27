@@ -28,8 +28,8 @@ defineProps({
 <style scoped>
 .topic-panel { padding: 15px 17px 17px; }
 .topic-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.topic-head h2 { font-size: 0.95rem; font-weight: 700; }
-.topic-all { display: inline-flex; min-height: 36px; align-items: center; gap: 6px; color: var(--wb-dim); font-size: 0.82rem; white-space: nowrap; }
+.topic-head h2 { font: 700 1.1rem/1.3 var(--wb-display); }
+.topic-all { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; color: var(--wb-dim); font-size: 0.82rem; white-space: nowrap; transition: color 150ms ease; }
 .topic-all:hover { color: var(--wb-accent); }
 .topic-all svg { width: 15px; height: 15px; }
 .topics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

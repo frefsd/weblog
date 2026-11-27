@@ -1,10 +1,10 @@
 <script setup>
-import { computed, shallowRef, watch } from 'vue'
+import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import {
-    ArrowRightOnRectangleIcon, Bars3Icon, CommandLineIcon, MagnifyingGlassIcon,
-    MoonIcon, SparklesIcon, SunIcon, UserCircleIcon, XMarkIcon,
+    ArrowRightOnRectangleIcon, Bars3Icon, MagnifyingGlassIcon,
+    MoonIcon, SunIcon, UserCircleIcon, XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import SiteSearch from './SiteSearch.vue'
 import { showMessage, showModel } from '@/composables/util'
@@ -16,6 +16,8 @@ const store = useStore()
 const { isDark, toggleTheme } = useTheme()
 const searchOpen = shallowRef(false)
 const menuOpen = shallowRef(false)
+const navigationElement = ref(null)
+const menuButton = ref(null)
 const brandName = computed(() => store.state.setting?.blogName || 'WeBlog')
 const signedIn = computed(() => Boolean(store.state.user?.username))
 const themeLabel = computed(() => isDark.value ? '切换到浅色模式' : '切换到深色模式')
@@ -25,7 +27,7 @@ const navigation = [
     { to: '/category', label: '分类' },
     { to: '/tag', label: '标签' },
     { to: '/archive', label: '归档' },
-    { to: '/ai', label: '小智', icon: SparklesIcon },
+    { to: '/ai', label: '小智' },
 ]
 
 watch(() => route.fullPath, () => {
@@ -35,6 +37,27 @@ watch(() => route.fullPath, () => {
 
 function isCurrent(path) {
     return route.path === path || (path !== '/' && route.path.startsWith(path + '/'))
+}
+
+function closeMenu() {
+    if (!menuOpen.value) return
+    menuOpen.value = false
+    menuButton.value?.focus()
+}
+
+async function toggleMenu() {
+    if (menuOpen.value) {
+        closeMenu()
+        return
+    }
+    menuOpen.value = true
+    await nextTick()
+    navigationElement.value?.querySelector('a')?.focus()
+}
+
+function openSearch() {
+    menuOpen.value = false
+    searchOpen.value = true
 }
 
 async function accountAction(command) {
@@ -56,42 +79,38 @@ async function accountAction(command) {
 </script>
 
 <template>
-    <header class="site-header" @keydown.esc="menuOpen = false">
+    <header class="site-header" @keydown.esc="closeMenu">
         <div class="site-width header-bar">
             <RouterLink to="/" class="site-brand" :title="brandName">
-                <span class="brand-mark"><CommandLineIcon aria-hidden="true" /></span>
                 <span class="brand-name">{{ brandName }}</span>
             </RouterLink>
 
-            <nav id="site-navigation" class="header-nav" :class="{ 'is-open': menuOpen }" aria-label="主导航">
+            <nav id="site-navigation" ref="navigationElement" class="header-nav" :class="{ 'is-open': menuOpen }" aria-label="主导航">
                 <RouterLink
-                    v-for="{ to, label, icon } in navigation"
+                    v-for="{ to, label } in navigation"
                     :key="to"
                     :to="to"
                     class="header-link"
                     :class="{ 'is-current': isCurrent(to) }"
-                    @click="menuOpen = false"
+                    @click="closeMenu"
                 >
-                    <component :is="icon" v-if="icon" aria-hidden="true" />
                     {{ label }}
                 </RouterLink>
             </nav>
 
             <div class="header-actions">
-                <button type="button" class="wb-action search-button" aria-label="搜索文章" @click="searchOpen = true">
+                <button type="button" class="header-icon search-button" aria-label="搜索文章" title="搜索文章" @click="openSearch">
                     <MagnifyingGlassIcon aria-hidden="true" />
-                    <span>搜索</span>
                 </button>
-                <button type="button" class="wb-icon-button theme-button" :aria-label="themeLabel" :title="themeLabel" @click="toggleTheme">
+                <button type="button" class="header-icon theme-button" :aria-label="themeLabel" :title="themeLabel" @click="toggleTheme">
                     <SunIcon v-if="isDark" aria-hidden="true" />
                     <MoonIcon v-else aria-hidden="true" />
                 </button>
-                <RouterLink v-if="!signedIn" to="/login" class="wb-action account-button" aria-label="登录">
+                <RouterLink v-if="!signedIn" to="/login" class="header-icon" aria-label="登录" title="登录">
                     <ArrowRightOnRectangleIcon aria-hidden="true" />
-                    <span class="account-label">登录</span>
                 </RouterLink>
-                <el-dropdown v-else trigger="click" @command="accountAction">
-                    <button type="button" class="wb-icon-button" aria-label="用户菜单" title="用户菜单">
+                <el-dropdown v-else trigger="click" popper-class="public-account-menu" @command="accountAction">
+                    <button type="button" class="header-icon" aria-label="用户菜单" title="用户菜单">
                         <UserCircleIcon aria-hidden="true" />
                     </button>
                     <template #dropdown>
@@ -102,12 +121,13 @@ async function accountAction(command) {
                     </template>
                 </el-dropdown>
                 <button
+                    ref="menuButton"
                     type="button"
-                    class="wb-icon-button menu-toggle"
+                    class="header-icon menu-toggle"
                     aria-controls="site-navigation"
                     :aria-expanded="menuOpen"
                     :aria-label="menuOpen ? '关闭主导航' : '打开主导航'"
-                    @click="menuOpen = !menuOpen"
+                    @click="toggleMenu"
                 >
                     <XMarkIcon v-if="menuOpen" aria-hidden="true" />
                     <Bars3Icon v-else aria-hidden="true" />
@@ -123,16 +143,16 @@ async function accountAction(command) {
     position: sticky;
     top: 0;
     z-index: 50;
-    border-bottom: 1px solid var(--wb-line);
-    background: color-mix(in srgb, var(--wb-bg) 93%, transparent);
-    backdrop-filter: blur(16px);
+    border-bottom: 1px solid #fff0db25;
+    background: linear-gradient(112deg, #0d202c, var(--wb-nav-bg));
+    color: var(--wb-nav-text);
 }
 
 .header-bar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    min-height: var(--wb-header-height);
+    min-height: calc(var(--wb-header-height) - 1px);
     gap: 24px;
 }
 
@@ -146,25 +166,11 @@ async function accountAction(command) {
 
 .site-brand {
     justify-self: start;
-    gap: 10px;
     max-width: 100%;
-    color: var(--wb-text);
-    font: 700 1.15rem/1.2 var(--wb-display);
+    color: var(--wb-nav-text);
+    font: 700 clamp(1.2rem, 2vw, 1.8rem)/1.2 var(--wb-display);
+    transition: color 150ms ease;
 }
-
-.brand-mark {
-    display: grid;
-    width: 35px;
-    height: 35px;
-    flex: none;
-    place-items: center;
-    border: 1px solid color-mix(in srgb, var(--wb-accent) 65%, var(--wb-line));
-    border-radius: 6px;
-    background: var(--wb-accent-soft);
-    color: var(--wb-accent);
-}
-
-.brand-mark svg { width: 20px; height: 20px; }
 
 .brand-name {
     overflow: hidden;
@@ -172,74 +178,82 @@ async function accountAction(command) {
     white-space: nowrap;
 }
 
-.header-nav { gap: 6px; }
+.header-nav { gap: clamp(10px, 2vw, 30px); }
 
 .header-link {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    min-height: var(--wb-header-height);
-    padding-inline: clamp(10px, 1.4vw, 18px);
-    color: var(--wb-muted);
-    font-size: 0.875rem;
-    font-weight: 600;
+    min-height: calc(var(--wb-header-height) - 1px);
+    padding-inline: clamp(8px, 1.2vw, 17px);
+    color: var(--wb-nav-text);
+    font: 600 clamp(0.98rem, 1.3vw, 1.18rem)/1.2 var(--wb-display);
     white-space: nowrap;
+    transition: color 150ms ease, background-color 150ms ease;
 }
 
-.header-link svg { width: 16px; height: 16px; }
-.header-link:hover { color: var(--wb-text); }
-.header-link.is-current { color: var(--wb-accent); }
+.site-brand:hover,
+.header-link:hover,
+.header-link.is-current { color: var(--wb-nav-accent); }
 
-.header-link.is-current::after {
-    position: absolute;
-    right: 14px;
-    bottom: -1px;
-    left: 14px;
-    height: 2px;
-    background: var(--wb-accent);
-    box-shadow: 0 0 14px var(--wb-accent-soft);
+.header-link::after {
     content: "";
+    position: absolute;
+    inset-inline: 8px;
+    bottom: 4px;
+    height: 2px;
+    background: var(--wb-nav-accent);
+    transform: scaleX(0);
+    transition: transform 180ms ease;
 }
 
-.header-actions {
-    justify-content: flex-end;
-    gap: 7px;
+.header-link:hover::after,
+.header-link:focus-visible::after,
+.header-link.is-current::after { transform: scaleX(1); }
+
+.header-actions { justify-content: flex-end; gap: 4px; }
+
+.header-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    place-items: center;
+    border-radius: 5px;
+    color: var(--wb-nav-text);
+    transition: background-color 150ms ease, color 150ms ease;
 }
 
-.account-button { flex: none; }
+.header-icon svg { width: 23px; height: 23px; }
+.header-icon:hover { background: #fff0db14; color: var(--wb-nav-accent); }
+.site-header :where(.site-brand, .header-link, .header-icon):focus-visible { outline-color: var(--wb-nav-accent); }
+.header-link:focus-visible { outline-offset: -4px; }
 .menu-toggle { display: none; }
 
 @media (max-width: 920px) {
-    .header-bar { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .header-bar { grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
 
     .header-nav {
+        position: absolute;
         display: none;
-        grid-column: 1 / -1;
-        grid-row: 2;
+        inset: 100% 0 auto;
         flex-wrap: wrap;
-        gap: 6px;
-        padding-bottom: 12px;
+        gap: 4px 8px;
+        padding: 10px var(--wb-gutter);
+        background: var(--wb-nav-bg);
+        border-bottom: 1px solid #fff0db25;
+        box-shadow: 0 14px 24px #0003;
     }
 
     .header-nav.is-open { display: flex; }
     .header-link { min-height: 44px; padding-inline: 14px; border-radius: 6px; }
-    .header-link.is-current { background: var(--wb-accent-soft); }
-    .header-link.is-current::after { content: none; }
-    .menu-toggle { display: inline-flex; }
+    .header-link.is-current { background: #fff0db14; }
+    .header-link::after { content: none; }
+    .menu-toggle { display: grid; }
 }
 
 @media (max-width: 530px) {
-    .header-actions { gap: 4px; }
-    .header-actions .wb-action { width: 42px; padding: 0; }
-    .search-button span,
-    .account-label { display: none; }
-    .site-brand { gap: 7px; font-size: 1rem; }
-    .brand-mark { width: 30px; height: 30px; }
-}
-
-@media (max-width: 360px) {
-    .header-actions .wb-action,
-    .header-actions .wb-icon-button { width: 36px; }
+    .header-actions { gap: 0; }
+    .header-icon svg { width: 21px; height: 21px; }
 }
 </style>

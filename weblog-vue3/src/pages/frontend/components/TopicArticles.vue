@@ -32,6 +32,7 @@ async function loadPage(page, scroll = false) {
         return
     }
     state.value = 'loading'
+    current.value = page
     if (scroll) document.getElementById('topic-articles')?.scrollIntoView()
 
     const request = { current: page, size: pageSize.value }
@@ -46,7 +47,7 @@ async function loadPage(page, scroll = false) {
         const data = response.data
         articles.value = data.records ?? []
         total.value = data.total
-        current.value = data.current
+        current.value = data.current ?? page
         pageSize.value = data.size
         state.value = 'ready'
     } catch {
@@ -66,11 +67,11 @@ loadRelated().then(result => { if (result.success) entries.value = result.data ?
                 <RouterLink :to="'/' + kind" class="topic-back"><ArrowLeftIcon aria-hidden="true" /> {{ labels.back }}</RouterLink>
                 <h1 class="wb-section-title">{{ name }}</h1>
             </div>
-            <span v-if="state === 'ready'" class="topic-count">{{ total }} 篇文章</span>
+            <span v-if="state === 'ready'" class="site-count">{{ total }} 篇文章</span>
         </header>
         <div class="site-split">
             <section aria-label="文章列表" :aria-busy="state === 'loading'">
-                <div v-if="state === 'loading'" class="wb-article-grid">
+                <div v-if="state === 'loading'" class="site-article-list">
                     <SkeletonCard v-for="index in 4" :key="index" />
                 </div>
                 <div v-else-if="state === 'failed'" class="wb-panel wb-state" role="status">
@@ -79,7 +80,7 @@ loadRelated().then(result => { if (result.success) entries.value = result.data ?
                 </div>
                 <p v-else-if="state === 'missing'" class="wb-panel wb-state">请选择一个{{ isCategory ? '分类' : '标签' }}。</p>
                 <p v-else-if="!articles.length" class="wb-panel wb-state">这个主题暂时没有文章。</p>
-                <div v-else class="wb-article-grid">
+                <div v-else class="site-article-list">
                     <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
                 </div>
                 <el-pagination v-if="total > pageSize" class="wb-pagination" layout="prev, pager, next" :total="total" :current-page="current" :page-size="pageSize" :pager-count="5" :disabled="state === 'loading'" @current-change="loadPage($event, true)" />
@@ -94,9 +95,8 @@ loadRelated().then(result => { if (result.success) entries.value = result.data ?
 </template>
 
 <style scoped>
-.topic-heading { scroll-margin-top: calc(var(--wb-header-height) + 20px); }
-.topic-count { color: var(--wb-dim); font-size: 0.85rem; }
-.topic-back { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; margin-bottom: 8px; color: var(--wb-dim); font-size: 0.85rem; }
+.topic-heading { scroll-margin-top: calc(var(--wb-header-height) + 14px); }
+.topic-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 4px; color: var(--wb-accent); font-size: 0.88rem; }
 .topic-back svg { width: 16px; height: 16px; }
-.topic-back:hover { color: var(--wb-accent); }
+.topic-back:hover { text-decoration: underline; text-underline-offset: 4px; }
 </style>

@@ -1,10 +1,23 @@
 <script setup>
-import { ArrowDownIcon, ArrowUpRightIcon, SparklesIcon } from '@heroicons/vue/24/outline'
-import cityscape from '@/assets/chongqing-night.webp'
+import { computed, ref, shallowRef } from 'vue'
+import { useDocumentVisibility, useIntersectionObserver } from '@vueuse/core'
+import { ArrowDownIcon, MapPinIcon, PauseIcon, PlayIcon, SparklesIcon } from '@heroicons/vue/24/outline'
+import cityscape from '@/assets/shanghai-night.webp'
 
 defineProps({
     introduction: { type: String, default: '' },
 })
+
+const heroElement = ref(null)
+const heroVisible = shallowRef(true)
+const motionPaused = shallowRef(false)
+const documentVisibility = useDocumentVisibility()
+const shouldPauseMotion = computed(() => motionPaused.value || !heroVisible.value || documentVisibility.value !== 'visible')
+const motionLabel = computed(() => motionPaused.value ? '播放背景动画' : '暂停背景动画')
+
+useIntersectionObserver(heroElement, ([entry]) => {
+    heroVisible.value = entry.isIntersecting
+}, { rootMargin: '-60px 0px 0px 0px', threshold: 0 })
 
 function showArticles() {
     const articles = document.getElementById('latest-articles')
@@ -14,184 +27,246 @@ function showArticles() {
 </script>
 
 <template>
-    <section class="blog-hero" aria-labelledby="blog-headline">
-        <img class="hero-image" :src="cityscape" alt="" width="1920" height="1080" fetchpriority="high" />
-        <div class="hero-shade" aria-hidden="true"></div>
-        <div class="hero-grid" aria-hidden="true"></div>
-        <div class="hero-frame" aria-hidden="true"></div>
-
-        <div class="hero-content">
+    <section ref="heroElement" class="blog-hero" :class="{ 'is-motion-paused': shouldPauseMotion }" aria-labelledby="blog-headline">
+        <img class="hero-image" :src="cityscape" alt="" width="1672" height="941" fetchpriority="high" />
+        <div class="hero-river" aria-hidden="true"></div>
+        <div class="site-width hero-content">
             <h1 id="blog-headline">开发笔记<span>与技术实践</span></h1>
             <p v-if="introduction">{{ introduction }}</p>
             <div class="hero-actions">
-                <a href="#latest-articles" class="wb-action wb-action--primary" @click.prevent="showArticles">
+                <a href="#latest-articles" class="hero-action hero-action--primary" @click.prevent="showArticles">
                     浏览文章 <ArrowDownIcon aria-hidden="true" />
                 </a>
-                <RouterLink to="/ai" class="wb-action">
-                    <SparklesIcon aria-hidden="true" /> 问小智
+                <RouterLink to="/ai" class="hero-action">
+                    问小智 <SparklesIcon aria-hidden="true" />
                 </RouterLink>
             </div>
         </div>
-        <a
-            class="photo-credit"
-            href="https://unsplash.com/photos/a-view-of-a-city-at-night-from-a-bridge-vMM4_VA8ogw"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="重庆夜景摄影，Albert Canite，打开 Unsplash"
-        >重庆夜景 <ArrowUpRightIcon aria-hidden="true" /></a>
+        <div class="hero-corner">
+            <span class="hero-location"><MapPinIcon aria-hidden="true" /> 上海 · 外滩</span>
+            <button
+                type="button"
+                class="hero-motion-toggle"
+                :aria-label="motionLabel"
+                :title="motionLabel"
+                @click="motionPaused = !motionPaused"
+            >
+                <PlayIcon v-if="motionPaused" aria-hidden="true" />
+                <PauseIcon v-else aria-hidden="true" />
+            </button>
+        </div>
     </section>
 </template>
 
 <style scoped>
 .blog-hero {
-    --wb-accent: #ff977c;
-    --wb-accent-ink: #21100b;
-    --wb-text: #ffffff;
-    --wb-muted: #e6edf7;
-    --wb-line: #c1d3ee69;
-    --wb-dim: #d9e7fb;
-    --wb-raised: #1d2e47;
-    --wb-cyan: #8aebe6;
+    --hero-height: clamp(350px, 29vw, 450px);
     position: relative;
     isolation: isolate;
-    display: flex;
-    min-height: clamp(400px, 34vw, 482px);
+    display: grid;
     align-items: center;
     overflow: hidden;
-    padding: clamp(32px, 5.1vw, 77px);
-    border: 1px solid #7283a74d;
-    border-radius: 12px;
-    background: #101d31;
-    box-shadow: var(--wb-shadow);
-}
-
-.hero-image,
-.hero-shade,
-.hero-grid,
-.hero-frame {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
+    min-height: var(--hero-height);
+    background: #102733;
+    color: var(--wb-nav-text);
 }
 
 .hero-image {
-    z-index: -3;
-    object-fit: cover;
-    object-position: 60% 55%;
-}
-
-.hero-shade {
-    z-index: -2;
-    background:
-        linear-gradient(90deg, #080b18f7 0%, #0a1020e8 23%, #10192fb8 40%, #192e512b 72%, #0c152c1a 100%),
-        linear-gradient(0deg, #090d19c9 0%, transparent 38%, #19234931 100%),
-        radial-gradient(ellipse at 82% 22%, #f8523b65, transparent 52%);
-}
-
-.hero-grid {
-    z-index: -1;
-    background-image: linear-gradient(#cef0ff12 1px, transparent 1px), linear-gradient(90deg, #cef0ff12 1px, transparent 1px);
-    background-size: 54px 54px;
-    mask-image: linear-gradient(90deg, transparent 10%, #000 100%);
-}
-
-.hero-frame { inset: 16px; height: auto; width: auto; }
-
-.hero-frame::before,
-.hero-frame::after {
     position: absolute;
-    width: 27px;
-    height: 27px;
+    z-index: -3;
+    inset: 0 0 0 auto;
+    width: min(80%, calc(var(--hero-height) * 2.18));
+    height: 100%;
+    object-fit: cover;
+    object-position: 72% 43%;
+    mask-image: linear-gradient(90deg, transparent, #000 30%);
+    transform-origin: 70% 62%;
+}
+
+.hero-river {
+    position: absolute;
+    z-index: -2;
+    inset: auto 0 0 28%;
+    height: 20%;
+    overflow: hidden;
+    mask-image: linear-gradient(180deg, transparent, #000 37%, #000 84%, #0009);
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+.hero-river::before,
+.hero-river::after {
+    position: absolute;
+    inset: -24% -12%;
     content: "";
 }
 
-.hero-frame::before {
-    top: 0;
-    left: 0;
-    border-top: 2px solid var(--wb-accent);
-    border-left: 2px solid var(--wb-accent);
-    filter: drop-shadow(0 0 7px #ff886a88);
+.hero-river::before {
+    background:
+        radial-gradient(ellipse 31% 17% at 69% 55%, #ffab5170, transparent 84%),
+        radial-gradient(ellipse 23% 10% at 47% 68%, #ffbf5063, transparent 87%),
+        radial-gradient(ellipse 30% 8% at 88% 76%, #ffd09342, transparent 85%);
+    opacity: 0.58;
 }
 
-.hero-frame::after {
-    right: 0;
-    bottom: 0;
-    border-right: 2px solid #a2f5eea8;
-    border-bottom: 2px solid #a2f5eea8;
+.hero-river::after {
+    background:
+        radial-gradient(ellipse 25% 15% at 85% 46%, #7fb8ee69, transparent 89%),
+        radial-gradient(ellipse 27% 9% at 66% 71%, #89aafa56, transparent 86%),
+        radial-gradient(ellipse 15% 6% at 90% 68%, #92dbff78, transparent 89%);
+    opacity: 0.46;
 }
 
-.hero-content {
-    width: min(100%, 500px);
-    padding-block: 8px;
-}
-
-.hero-content h1 {
-    color: var(--wb-text);
-    font: 820 clamp(2.65rem, 6vw, 5.25rem)/1.12 var(--wb-display);
-    letter-spacing: -0.065em;
-    text-wrap: balance;
-    text-shadow: 0 4px 26px #0008;
-}
-
-.hero-content h1 span {
-    display: block;
-    margin-top: 4px;
-    color: var(--wb-accent);
-}
-
-.hero-content p {
-    margin-top: 22px;
-    color: var(--wb-muted);
-    max-width: 36ch;
-    font-size: clamp(0.95rem, 1.45vw, 1.125rem);
-    overflow-wrap: anywhere;
-    text-shadow: 0 2px 8px #000a;
-}
-
-.hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 28px;
-}
-
-.hero-actions .wb-action { padding-inline: 16px; min-height: 46px; }
-.hero-actions .wb-action:not(.wb-action--primary) { background: #0e17279c; }
-.hero-actions .wb-action:not(.wb-action--primary):hover { background: var(--wb-raised); }
-
-.photo-credit {
+.blog-hero::after {
+    content: "";
     position: absolute;
-    bottom: 27px;
-    right: 29px;
+    z-index: -1;
+    inset: 0;
+    background:
+        linear-gradient(90deg, #102733 0%, #102733 15%, #0c2330f0 27%, #0b1e2aaf 37%, #112b3a38 55%, transparent 76%),
+        linear-gradient(180deg, #08192333, transparent 29%, transparent 72%, #08192353);
+    pointer-events: none;
+}
+
+.hero-content { padding-block: clamp(36px, 5vw, 68px); }
+.hero-content h1 {
+    max-width: 9em;
+    padding-inline-start: 0.32em;
+    border-inline-start: clamp(4px, 0.52vw, 7px) solid #e58642;
+    font: 700 clamp(3.15rem, 5.1vw, 5rem)/1.09 var(--wb-display);
+    letter-spacing: 0.015em;
+    overflow-wrap: anywhere;
+    text-shadow: 0 3px 25px #07172080;
+}
+
+.hero-content h1 span { display: block; }
+.hero-content p {
+    max-width: min(33ch, 57%);
+    margin-top: 18px;
+    color: #f9ead7;
+    font: 500 clamp(1rem, 1.7vw, 1.4rem)/1.65 var(--wb-display);
+    overflow-wrap: anywhere;
+    text-shadow: 0 2px 14px #05131f;
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(20px, 2.3vw, 32px); }
+.hero-action {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background: #101a2abc;
-    color: var(--wb-muted);
-    font-size: 0.75rem;
+    justify-content: center;
+    gap: 8px;
+    min-width: clamp(120px, 11vw, 166px);
+    min-height: 46px;
+    padding: 5px 13px;
+    border: 1px solid #fff0dbb5;
+    border-radius: 5px;
+    background: #0d232ecf;
+    color: var(--wb-nav-text);
+    font-size: clamp(0.9rem, 1.2vw, 1rem);
+    font-weight: 650;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
 }
 
-.photo-credit svg { width: 13px; height: 13px; }
-.photo-credit:hover { color: #fff; text-decoration: underline; }
+.hero-action svg { width: 17px; height: 17px; }
+.hero-action:hover { border-color: var(--wb-nav-accent); color: var(--wb-nav-accent); }
+.hero-action--primary { background: #a44d1c; border-color: #d87937; color: #fff7e9; }
+.hero-action--primary:hover { background: #b15723; color: #fff7e9; }
+.hero-action:focus-visible,
+.hero-motion-toggle:focus-visible { outline-color: var(--wb-nav-accent); }
 
-@media (max-width: 620px) {
-    .blog-hero { min-height: 420px; padding: 30px 22px 50px; align-items: end; }
-    .hero-image { object-position: 72% 55%; }
-    .hero-shade {
+.hero-corner {
+    position: absolute;
+    right: var(--wb-gutter);
+    bottom: 9px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hero-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 28px;
+    padding-inline: 7px;
+    border-radius: 4px;
+    background: #0b1a24d9;
+    color: #f9ead7;
+    font-size: 0.71rem;
+    white-space: nowrap;
+}
+
+.hero-location svg { width: 13px; height: 13px; }
+
+.hero-motion-toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid #fff0db6b;
+    border-radius: 5px;
+    background: #0b1a24df;
+    color: var(--wb-nav-text);
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.hero-motion-toggle:hover { background: #102733; color: var(--wb-nav-accent); }
+.hero-motion-toggle svg { width: 18px; height: 18px; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-motion-toggle { display: grid; }
+    .hero-river::before { animation: river-warm 8s ease-in-out -1.5s infinite alternate; }
+    .hero-river::after { animation: river-cool 11s ease-in-out -3.5s infinite alternate; }
+}
+
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .hero-image { animation: skyline-drift 15s ease-in-out -2s infinite alternate; }
+}
+
+.is-motion-paused .hero-image,
+.is-motion-paused .hero-river::before,
+.is-motion-paused .hero-river::after { animation-play-state: paused; }
+
+@keyframes skyline-drift {
+    from { transform: translate3d(0.2%, 0.15%, 0) scale(1.018); }
+    to { transform: translate3d(-1.2%, -0.55%, 0) scale(1.055); }
+}
+
+@keyframes river-warm {
+    from { transform: translate3d(-6%, 2%, 0) scaleX(0.95); opacity: 0.36; }
+    to { transform: translate3d(6%, -1%, 0) scaleX(1.07); opacity: 0.81; }
+}
+
+@keyframes river-cool {
+    from { transform: translate3d(5%, -2%, 0) scaleX(1.12); opacity: 0.30; }
+    to { transform: translate3d(-7%, 1.5%, 0) scaleX(0.94); opacity: 0.72; }
+}
+
+@media (max-width: 760px) {
+    .blog-hero { --hero-height: clamp(321px, 61vw, 385px); }
+    .hero-image { width: 100%; mask-image: none; }
+    .hero-river { inset-inline-start: 36%; height: 24%; opacity: 0.65; }
+    .blog-hero::after {
         background:
-            linear-gradient(0deg, #090d1bf7 0%, #10182be9 37%, #1824434a 78%, #34202833),
-            linear-gradient(90deg, #090d1b7d, transparent);
+            linear-gradient(90deg, #0d202de8 0%, #0d202dc4 36%, #0d202d38 100%),
+            linear-gradient(0deg, #071a25a8, transparent 62%);
     }
-    .hero-frame { inset: 10px; }
-    .hero-frame::before,
-    .hero-frame::after { width: 18px; height: 18px; }
-    .hero-content h1 { letter-spacing: -0.035em; }
-    .hero-content p { margin-top: 14px; }
-    .hero-actions { margin-top: 20px; }
-    .photo-credit { bottom: 17px; right: 19px; }
+    .hero-content { padding-block: 35px 59px; }
+    .hero-content h1 { font-size: clamp(2.52rem, 10.5vw, 4rem); }
+    .hero-content p { max-width: 23em; margin-top: 14px; }
+    .hero-actions { gap: 8px; margin-top: 18px; }
+}
+
+@media (max-width: 480px) {
+    .hero-image { object-position: 39% 43%; }
+}
+
+@media (max-width: 360px) {
+    .hero-image { object-position: 28% 43%; }
+}
+
+@media (pointer: coarse) {
+    .hero-corner { bottom: 5px; }
 }
 </style>

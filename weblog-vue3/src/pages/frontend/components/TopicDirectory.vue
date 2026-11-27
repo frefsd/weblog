@@ -32,7 +32,7 @@ load()
     <main class="site-width site-page">
         <header class="wb-page-heading">
             <h1 class="wb-section-title">{{ title }}</h1>
-            <span v-if="state === 'ready'" class="directory-count">{{ entries.length }} 个{{ isCategory ? '分类' : '标签' }}</span>
+            <span v-if="state === 'ready'" class="site-count">{{ entries.length }} 个{{ isCategory ? '分类' : '标签' }}</span>
         </header>
 
         <div class="site-split">
@@ -44,7 +44,7 @@ load()
             <p v-else-if="!entries.length" class="wb-panel wb-state">暂无{{ isCategory ? '分类' : '标签' }}</p>
             <ul v-else class="directory-grid">
                 <li v-for="item in entries" :key="item.id">
-                    <RouterLink :to="{ path: '/' + kind + '/list', query: { id: item.id, name: item.name } }" class="wb-panel directory-link">
+                    <RouterLink :to="{ path: '/' + kind + '/list', query: { id: item.id, name: item.name } }" class="directory-link">
                         <span class="directory-icon">
                             <FolderIcon v-if="isCategory" aria-hidden="true" />
                             <HashtagIcon v-else aria-hidden="true" />
@@ -54,32 +54,34 @@ load()
                     </RouterLink>
                 </li>
             </ul>
-            <aside class="site-rail"><UserInfoCard /></aside>
+            <aside class="site-rail" aria-label="作者"><UserInfoCard /></aside>
         </div>
     </main>
 </template>
 
 <style scoped>
-.directory-count { color: var(--wb-dim); font-size: 0.85rem; }
-.directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(14px, 3vw, 36px); }
+.directory-grid li { min-width: 0; border-bottom: 1px solid var(--wb-line); }
 
 .directory-link {
-    display: flex;
+    display: grid;
+    grid-template-columns: 35px minmax(0, 1fr) 17px;
     height: 100%;
+    min-height: 59px;
     align-items: center;
     gap: 11px;
-    min-height: 67px;
-    padding: 10px;
+    padding: 8px 4px;
     color: var(--wb-text);
-    font-weight: 630;
+    font: 700 clamp(1rem, 1.8vw, 1.22rem)/1.35 var(--wb-display);
     overflow-wrap: anywhere;
-    transition: background-color 160ms ease, border-color 160ms ease;
+    transition: color 150ms ease;
 }
 
-.directory-link:hover { border-color: var(--wb-accent); background: var(--wb-raised); }
-.directory-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 6px; background: var(--wb-cyan-soft); color: var(--wb-cyan); }
-.directory-icon svg { width: 18px; height: 18px; }
-.directory-arrow { width: 17px; height: 17px; flex: none; margin-left: auto; color: var(--wb-dim); }
+.directory-link:hover,
+.directory-link:focus-visible { color: var(--wb-accent); }
+.directory-icon { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 5px; background: var(--wb-accent-soft); color: var(--wb-accent); }
+.directory-icon svg { width: 17px; height: 17px; }
+.directory-arrow { width: 16px; height: 16px; color: var(--wb-accent); }
 
 @media (max-width: 510px) {
     .directory-grid { grid-template-columns: minmax(0, 1fr); }

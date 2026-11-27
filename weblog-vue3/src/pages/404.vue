@@ -1,23 +1,22 @@
 <script setup>
 import { ArrowLeftIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
-import Header from '@/layouts/components/Header.vue'
-import Footer from '@/layouts/components/Footer.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
 </script>
 
 <template>
-    <Header />
-    <main class="site-width site-page missing-page">
-        <div class="wb-panel missing-panel">
-            <p class="status-code">404</p>
-            <h1>页面未找到</h1>
-            <p class="missing-help">这个页面可能已移动或删除。</p>
-            <div class="missing-actions">
-                <RouterLink to="/" class="wb-action wb-action--primary"><ArrowLeftIcon aria-hidden="true" /> 返回首页</RouterLink>
-                <RouterLink to="/search" class="wb-action"><MagnifyingGlassIcon aria-hidden="true" /> 搜索文章</RouterLink>
+    <PublicLayout>
+        <main class="site-width site-page missing-page">
+            <div class="wb-panel missing-panel">
+                <p class="status-code">404</p>
+                <h1>页面未找到</h1>
+                <p class="missing-help">这个页面可能已移动或删除。</p>
+                <div class="missing-actions">
+                    <RouterLink to="/" class="wb-action wb-action--primary"><ArrowLeftIcon aria-hidden="true" /> 返回首页</RouterLink>
+                    <RouterLink to="/search" class="wb-action"><MagnifyingGlassIcon aria-hidden="true" /> 搜索文章</RouterLink>
+                </div>
             </div>
-        </div>
-    </main>
-    <Footer />
+        </main>
+    </PublicLayout>
 </template>
 
 <style scoped>

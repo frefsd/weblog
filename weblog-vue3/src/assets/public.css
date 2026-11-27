@@ -1,0 +1,119 @@
+.public-site,
+.public-search-dialog,
+.public-account-menu,
+.game-dialog {
+    --wb-bg: #f8f1e5;
+    --wb-panel: #fffbf4;
+    --wb-raised: #f1e5d6;
+    --wb-hover: #eaddcb;
+    --wb-line: #d7c6b1;
+    --wb-text: #14212a;
+    --wb-muted: #4c4d46;
+    --wb-dim: #645e54;
+    --wb-accent: #954016;
+    --wb-accent-soft: #f4e1ce;
+    --wb-accent-ink: #fff9ef;
+    --wb-cyan: #215a68;
+    --wb-cyan-soft: #deebea;
+    --wb-grid: #38415814;
+    --wb-shadow: 0 16px 42px #35261917;
+    --wb-radius: 7px;
+    --wb-display: Georgia, "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", SimSun, serif;
+
+    --el-color-primary: var(--wb-accent);
+    --el-color-primary-light-3: color-mix(in srgb, var(--wb-accent) 80%, var(--wb-panel));
+    --el-color-primary-light-5: color-mix(in srgb, var(--wb-accent) 62%, var(--wb-panel));
+    --el-color-primary-light-7: color-mix(in srgb, var(--wb-accent) 35%, var(--wb-panel));
+    --el-color-primary-light-8: color-mix(in srgb, var(--wb-accent) 22%, var(--wb-panel));
+    --el-color-primary-light-9: var(--wb-accent-soft);
+    --el-color-primary-dark-2: color-mix(in srgb, var(--wb-accent) 88%, var(--wb-text));
+    --el-bg-color: var(--wb-panel);
+    --el-bg-color-overlay: var(--wb-panel);
+    --el-text-color-primary: var(--wb-text);
+    --el-text-color-regular: var(--wb-muted);
+    --el-text-color-secondary: var(--wb-dim);
+    --el-text-color-placeholder: var(--wb-dim);
+    --el-border-color: var(--wb-line);
+    --el-border-color-light: var(--wb-line);
+    --el-border-color-lighter: var(--wb-line);
+    --el-fill-color: var(--wb-raised);
+    --el-fill-color-light: var(--wb-raised);
+    --el-fill-color-blank: var(--wb-panel);
+}
+
+html.dark :is(.public-site, .public-search-dialog, .public-account-menu, .game-dialog) {
+    --wb-bg: #111c24;
+    --wb-panel: #172631;
+    --wb-raised: #20323e;
+    --wb-hover: #29414e;
+    --wb-line: #38505d;
+    --wb-text: #f5eddf;
+    --wb-muted: #c6ccd0;
+    --wb-dim: #acbac1;
+    --wb-accent: #f8ac75;
+    --wb-accent-soft: #392f2a;
+    --wb-accent-ink: #2d1a12;
+    --wb-cyan: #8ac9d3;
+    --wb-cyan-soft: #1d3a45;
+    --wb-grid: #b5d2df15;
+    --wb-shadow: 0 16px 42px #060c1066;
+}
+
+.public-site {
+    --wb-page-width: 1416px;
+    --wb-gutter: clamp(16px, 4.25vw, 66px);
+    --wb-header-height: 66px;
+    --wb-nav-bg: #102733;
+    --wb-nav-text: #fff0db;
+    --wb-nav-muted: #ddd5c9;
+    --wb-nav-accent: #ffa763;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--wb-bg);
+    color: var(--wb-text);
+}
+
+.public-site .wb-page-heading {
+    gap: 12px 24px;
+    margin-bottom: clamp(20px, 3vw, 38px);
+    padding-bottom: clamp(14px, 2vw, 23px);
+}
+
+.public-site .wb-section-title {
+    display: block;
+    font-size: clamp(1.9rem, 3.8vw, 3.3rem);
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
+}
+
+.public-site .wb-section-title::before {
+    content: none;
+}
+
+.public-site .site-count {
+    color: var(--wb-dim);
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.public-site .site-article-list {
+    display: grid;
+    min-width: 0;
+}
+
+.public-site :where(a, button, input, textarea, select, [tabindex]):focus-visible,
+.public-search-dialog :where(a, button, input):focus-visible {
+    outline-color: var(--wb-cyan);
+}
+
+.public-site ::selection,
+.public-search-dialog ::selection {
+    background: var(--wb-accent);
+    color: var(--wb-accent-ink);
+}
+
+@media (max-width: 760px) {
+    .public-site { --wb-header-height: 60px; }
+}

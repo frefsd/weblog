@@ -66,6 +66,7 @@ watch(keyword, (value, _, onCleanup) => {
 <template>
     <el-dialog
         :model-value="modelValue"
+        class="public-search-dialog"
         title="搜索文章"
         width="560px"
         top="min(13vh, 100px)"
@@ -123,9 +124,11 @@ watch(keyword, (value, _, onCleanup) => {
     justify-content: space-between;
     padding: 10px;
     border-radius: 6px;
+    transition: background-color 150ms ease;
 }
 
-.quick-result:hover { background: var(--wb-raised); }
+.quick-result:hover,
+.quick-result:focus-visible { background: var(--wb-raised); }
 .quick-result svg { width: 16px; height: 16px; flex: none; color: var(--wb-accent); }
 .result-text { display: grid; min-width: 0; }
 .result-text strong,

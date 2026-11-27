@@ -2,8 +2,7 @@
 import { ArrowUpIcon, ArrowUpRightIcon, CpuChipIcon, SparklesIcon, StopIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
 import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Header from '@/layouts/components/Header.vue'
-import Footer from '@/layouts/components/Footer.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
 import { sendChatMessageStreamText, validateSession, getChatHistory } from '@/api/frontend/chat'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -303,79 +302,79 @@ function stopStreaming() {
 </script>
 
 <template>
-    <Header />
-    <main class="site-width site-page chat-page">
-        <section class="wb-panel chat-shell" aria-labelledby="chat-title">
-            <header class="chat-header">
-                <span class="chat-icon"><CpuChipIcon aria-hidden="true" /></span>
-                <div>
-                    <h1 id="chat-title">小智</h1>
-                    <p>基于博客内容的 AI 助手</p>
+    <PublicLayout>
+        <main class="site-width site-page chat-page">
+            <section class="wb-panel chat-shell" aria-labelledby="chat-title">
+                <header class="chat-header">
+                    <span class="chat-icon"><CpuChipIcon aria-hidden="true" /></span>
+                    <div>
+                        <h1 id="chat-title">小智</h1>
+                        <p>基于博客内容的 AI 助手</p>
+                    </div>
+                </header>
+                <div v-if="!messages.length" class="chat-welcome">
+                    <span class="welcome-icon" aria-hidden="true"><SparklesIcon /></span>
+                    <h2>今天想了解什么？</h2>
+                    <div class="chat-suggestions" aria-label="推荐问题">
+                        <button v-for="question in suggestedQuestions" :key="question" type="button" class="wb-chip" @click="handleSuggested(question)">
+                            {{ question }} <ArrowUpRightIcon aria-hidden="true" />
+                        </button>
+                    </div>
                 </div>
-            </header>
-            <div v-if="!messages.length" class="chat-welcome">
-                <span class="welcome-icon" aria-hidden="true"><SparklesIcon /></span>
-                <h2>今天想了解什么？</h2>
-                <div class="chat-suggestions" aria-label="推荐问题">
-                    <button v-for="question in suggestedQuestions" :key="question" type="button" class="wb-chip" @click="handleSuggested(question)">
-                        {{ question }} <ArrowUpRightIcon aria-hidden="true" />
-                    </button>
-                </div>
-            </div>
 
-            <div v-else ref="messageAreaRef" class="chat-messages" aria-label="对话记录">
-                <div v-for="(msg, index) in messages" :key="index" class="chat-row" :class="{ 'is-user': msg.isUser }">
-                    <span class="message-icon" aria-hidden="true">
-                        <UserCircleIcon v-if="msg.isUser" />
-                        <CpuChipIcon v-else />
-                    </span>
-                    <div class="chat-bubble" :class="{ 'is-error': msg.isError }">
-                        <p v-if="msg.isError || msg.isUser" class="plain-message">{{ msg.content }}</p>
-                        <div v-else-if="msg.isStreaming" :ref="el => setStreamingRef(el, msg)" class="markdown-body"></div>
-                        <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                <div v-else ref="messageAreaRef" class="chat-messages" aria-label="对话记录">
+                    <div v-for="(msg, index) in messages" :key="index" class="chat-row" :class="{ 'is-user': msg.isUser }">
+                        <span class="message-icon" aria-hidden="true">
+                            <UserCircleIcon v-if="msg.isUser" />
+                            <CpuChipIcon v-else />
+                        </span>
+                        <div class="chat-bubble" :class="{ 'is-error': msg.isError }">
+                            <p v-if="msg.isError || msg.isUser" class="plain-message">{{ msg.content }}</p>
+                            <div v-else-if="msg.isStreaming" :ref="el => setStreamingRef(el, msg)" class="markdown-body"></div>
+                            <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
 
-                        <div v-if="msg.isStreaming" class="typing-indicator" role="status" aria-label="小智正在回答">
-                            <i></i><i></i><i></i>
-                        </div>
+                            <div v-if="msg.isStreaming" class="typing-indicator" role="status" aria-label="小智正在回答">
+                                <i></i><i></i><i></i>
+                            </div>
 
-                        <div v-if="msg.sources?.length" class="message-sources">
-                            <span>参考文章</span>
-                            <button v-for="(source, sourceIndex) in msg.sources" :key="sourceIndex" type="button" class="wb-chip" @click="goArticle(source.articleId)">
-                                {{ source.articleTitle }} <ArrowUpRightIcon aria-hidden="true" />
-                            </button>
+                            <div v-if="msg.sources?.length" class="message-sources">
+                                <span>参考文章</span>
+                                <button v-for="(source, sourceIndex) in msg.sources" :key="sourceIndex" type="button" class="wb-chip" @click="goArticle(source.articleId)">
+                                    {{ source.articleTitle }} <ArrowUpRightIcon aria-hidden="true" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <form class="chat-composer" @submit.prevent="sendMessage">
-                <div class="composer-row">
-                    <textarea
-                        ref="textareaRef"
-                        v-model="inputText"
-                        aria-label="输入你的问题"
-                        :placeholder="isStreaming ? '小智正在回答…' : '输入你的问题…'"
-                        :disabled="isStreaming"
-                        rows="1"
-                        maxlength="200"
-                        @input="onInput"
-                        @keydown="onKeydown"
-                    ></textarea>
-                    <button v-if="!isStreaming" type="submit" class="wb-action wb-action--primary send-message" aria-label="发送问题" :disabled="!inputText.trim()">
-                        <ArrowUpIcon aria-hidden="true" />
-                    </button>
-                    <button v-else type="button" class="wb-icon-button send-message" aria-label="停止生成" @click="stopStreaming">
-                        <StopIcon aria-hidden="true" />
-                    </button>
-                </div>
-                <div class="composer-details">
-                    <span class="keyboard-hint">Enter 发送 · Shift + Enter 换行</span>
-                    <span class="character-count">{{ inputText.length }}/200</span>
-                </div>
-            </form>
-        </section>
-    </main>
-    <Footer />
+                <form class="chat-composer" @submit.prevent="sendMessage">
+                    <div class="composer-row">
+                        <textarea
+                            ref="textareaRef"
+                            v-model="inputText"
+                            aria-label="输入你的问题"
+                            :placeholder="isStreaming ? '小智正在回答…' : '输入你的问题…'"
+                            :disabled="isStreaming"
+                            rows="1"
+                            maxlength="200"
+                            @input="onInput"
+                            @keydown="onKeydown"
+                        ></textarea>
+                        <button v-if="!isStreaming" type="submit" class="wb-action wb-action--primary send-message" aria-label="发送问题" :disabled="!inputText.trim()">
+                            <ArrowUpIcon aria-hidden="true" />
+                        </button>
+                        <button v-else type="button" class="wb-icon-button send-message" aria-label="停止生成" @click="stopStreaming">
+                            <StopIcon aria-hidden="true" />
+                        </button>
+                    </div>
+                    <div class="composer-details">
+                        <span class="keyboard-hint">Enter 发送 · Shift + Enter 换行</span>
+                        <span class="character-count">{{ inputText.length }}/200</span>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </PublicLayout>
 </template>
 
 <style scoped>

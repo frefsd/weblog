@@ -102,7 +102,7 @@ WeBlog/
         ├── pages/
         │   ├── admin/               # 9 个后台页面（仪表盘/文章/分类/标签/设置/监控日志/告警）
         │   └── frontend/            # 11 个前台页面（首页/文章详情/归档/搜索/AI 聊天/游戏等）
-        ├── layouts/                 # admin.vue 布局 + Header/Footer/AdminMenu 等组件
+        ├── layouts/                 # 公共 PublicLayout.vue、后台 admin.vue 与共享组件
         └── components/              # 骨架屏/图表/花瓣动画/MDEditor/FormDrawer 等
 
 ```
@@ -208,7 +208,7 @@ npm run build     # → dist/
 ## Key Frontend Conventions
 
 - **All pages** use `<script setup>` Composition API
-- **Frontend pages** manually include `<Header>` and `<Footer>` components (no layout wrapper)
+- **Public blog pages** use `layouts/PublicLayout.vue` for the shared header, footer and public theme tokens
 - **Admin pages** use `layouts/admin.vue` (sidebar + header + tag tabs + content area)
 - **API layer**: one file per domain, `axios.post()` for all requests
 - **Dark mode**: `localStorage('theme')` + `document.documentElement.classList.toggle('dark')`

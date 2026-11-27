@@ -1,16 +1,15 @@
 <script setup>
-import Header from '@/layouts/components/Header.vue'
-import Footer from '@/layouts/components/Footer.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
 import UserInfoCard from '@/components/UserInfoCard.vue'
 </script>
 
 <template>
-    <Header />
-    <main class="site-width site-page about-page">
-        <header class="wb-page-heading"><h1 class="wb-section-title">关于作者</h1></header>
-        <UserInfoCard />
-    </main>
-    <Footer />
+    <PublicLayout>
+        <main class="site-width site-page about-page">
+            <header class="wb-page-heading"><h1 class="wb-section-title">关于作者</h1></header>
+            <UserInfoCard />
+        </main>
+    </PublicLayout>
 </template>
 
 <style scoped>

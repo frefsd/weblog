@@ -1,11 +1,10 @@
 <script setup>
-import Header from '@/layouts/components/Header.vue'
-import Footer from '@/layouts/components/Footer.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
 import TopicArticles from './components/TopicArticles.vue'
 </script>
 
 <template>
-    <Header />
-    <TopicArticles kind="category" />
-    <Footer />
+    <PublicLayout>
+        <TopicArticles kind="category" />
+    </PublicLayout>
 </template>

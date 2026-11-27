@@ -57,5 +57,7 @@ const brandName = computed(() => store.state.setting?.blogName || 'WeBlog')
 .footer-brand { color: var(--wb-text); font: 700 1rem/1.2 var(--wb-display); }
 .footer-brand svg { width: 18px; height: 18px; color: var(--wb-accent); }
 .footer-links { color: var(--wb-muted); font-size: 0.78rem; gap: 6px 20px; }
-.footer-links a:hover { color: var(--wb-accent); }
+.footer-links a { min-height: 32px; transition: color 150ms ease; }
+.footer-links a:hover,
+.footer-brand:hover { color: var(--wb-accent); }
 </style>
